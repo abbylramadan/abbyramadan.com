@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npx next build:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm install:*)"
     ]
   }
 }
