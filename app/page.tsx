@@ -228,9 +228,9 @@ export default function Home() {
       </section>
 
       {/* Experience Section */}
-      <section id='experience' className='px-4 py-20'>
+      <section id='experience' className='px-4 pb-20'>
         <div className='max-w-4xl mx-auto'>
-          <h2 className='text-3xl font-bold mb-8 border-b border-purple-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mb-8 border-b border-purple-900/30 pb-4'>
             Experience
           </h2>
           <div className='flex flex-col gap-10'>
@@ -256,7 +256,7 @@ export default function Home() {
           </div>
 
           {/* Education */}
-          <h2 className='text-3xl font-bold mt-16 mb-8 border-b border-purple-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-purple-900/30 pb-4'>
             Education
           </h2>
           <div className='flex flex-col gap-6'>
@@ -282,7 +282,7 @@ export default function Home() {
           </div>
 
           {/* Skills */}
-          <h2 className='text-3xl font-bold mt-16 mb-8 border-b border-purple-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-purple-900/30 pb-4'>
             Skills
           </h2>
           <div className='flex flex-wrap gap-2'>
@@ -305,7 +305,7 @@ export default function Home() {
           </div>
 
           {/* Interests */}
-          <h2 className='text-3xl font-bold mt-16 mb-8 border-b border-purple-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-purple-900/30 pb-4'>
             Interests
           </h2>
           <div className='flex flex-wrap gap-2'>
