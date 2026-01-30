@@ -1,18 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0f0a;
+  --background: #0f0a0a;
   --foreground: #ffffff;
-  --accent-green: #4ade80;
   --accent-pink: #f472b6;
+  --accent-peach: #fdba74;
+  --accent-yellow: #fde047;
   --radius: 0.5rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-accent-green: var(--accent-green);
   --color-accent-pink: var(--accent-pink);
+  --color-accent-peach: var(--accent-peach);
+  --color-accent-yellow: var(--accent-yellow);
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
@@ -27,7 +29,7 @@ html {
 }
 
 body {
-  background: linear-gradient(135deg, #0a0f0a 0%, #0f1a0f 100%);
+  background: linear-gradient(135deg, #0f0a0a 0%, #1a0f0f 100%);
   background-attachment: fixed;
   color: #ffffff;
   font-family: var(--font-body), system-ui, -apple-system, sans-serif;
@@ -69,17 +71,17 @@ code, pre {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #86efac 0%, var(--accent-green) 100%);
+  background: linear-gradient(135deg, var(--accent-pink) 0%, var(--accent-yellow) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .card-glow {
-  box-shadow: 0 0 30px rgba(74, 222, 128, 0.15);
+  box-shadow: 0 0 30px rgba(244, 114, 182, 0.15);
   transition: box-shadow 0.3s ease;
 }
 
 .card-glow:hover {
-  box-shadow: 0 0 40px rgba(74, 222, 128, 0.25);
+  box-shadow: 0 0 40px rgba(244, 114, 182, 0.25);
 }

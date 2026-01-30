@@ -106,7 +106,7 @@ export default function Home() {
           <h1 className='text-5xl sm:text-7xl font-bold tracking-tight gradient-text'>
             Abby Ramadan
           </h1>
-          <p className='text-xl sm:text-2xl text-green-300'>
+          <p className='text-xl sm:text-2xl text-pink-300'>
             Capital Markets Associate
           </p>
           <p className='text-gray-300 max-w-xl mx-auto'>
@@ -121,14 +121,14 @@ export default function Home() {
               href='https://linkedin.com/in/abby-ramadan/'
               target='_blank'
               rel='noopener noreferrer'
-              className='text-green-300 hover:text-green-200 transition-colors underline underline-offset-4'
+              className='text-amber-200 hover:text-amber-100 transition-colors underline underline-offset-4'
             >
               LinkedIn
             </a>
             <span className='hidden sm:inline text-gray-600'>•</span>
             <a
               href='mailto:abbyramadan98@gmail.com'
-              className='text-green-300 hover:text-green-200 transition-colors underline underline-offset-4'
+              className='text-amber-200 hover:text-amber-100 transition-colors underline underline-offset-4'
             >
               Contact
             </a>
@@ -139,12 +139,12 @@ export default function Home() {
       {/* Projects Section */}
       <section id='projects' className='px-4 py-20'>
         <div className='max-w-4xl mx-auto'>
-          <h2 className="text-2xl font-semibold mb-8 border-b border-green-900/30 pb-4">
+          <h2 className="text-2xl font-semibold mb-8 border-b border-pink-900/30 pb-4">
             Featured <span className="gradient-text">Project</span>
           </h2>
 
           <div className="relative group">
-            <div className="absolute -inset-1 bg-green-600 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-300"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-orange-400 to-yellow-400 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
             <div className="relative bg-gray-900/90 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 card-glow">
               <div className="space-y-6">
                 <h3 className="text-2xl font-bold">
@@ -161,7 +161,7 @@ export default function Home() {
                   href="https://mortgagecalc.abbyramadan.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center px-6 py-3 bg-green-600 text-white hover:bg-green-700 transition-all duration-300 font-medium rounded-lg shadow-lg hover:shadow-green-500/30 group"
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-500 to-orange-400 text-white hover:from-pink-600 hover:to-orange-500 transition-all duration-300 font-medium rounded-lg shadow-lg hover:shadow-pink-500/30 group"
                 >
                   Launch Calculator
                   <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
@@ -175,7 +175,7 @@ export default function Home() {
       {/* Experience Section */}
       <section id='experience' className='px-4 pb-20'>
         <div className='max-w-4xl mx-auto'>
-          <h2 className='text-2xl font-semibold mb-8 border-b border-green-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mb-8 border-b border-pink-900/30 pb-4'>
             Experience
           </h2>
           <div className='flex flex-col gap-10'>
@@ -191,7 +191,7 @@ export default function Home() {
                 <ul className='flex flex-col gap-2 text-sm text-gray-300'>
                   {exp.achievements.map((achievement, i) => (
                     <li key={i} className='flex items-start'>
-                      <span className='text-green-500 mr-3'>-</span>
+                      <span className='text-pink-400 mr-3'>-</span>
                       <span>{achievement}</span>
                     </li>
                   ))}
@@ -201,7 +201,7 @@ export default function Home() {
           </div>
 
           {/* Education */}
-          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-green-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-pink-900/30 pb-4'>
             Education
           </h2>
           <div className='flex flex-col gap-6'>
@@ -227,29 +227,36 @@ export default function Home() {
           </div>
 
           {/* Skills */}
-          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-green-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-pink-900/30 pb-4'>
             Skills
           </h2>
           <div className='flex flex-wrap gap-2'>
-            {skills.map((skill) => (
-              <span
-                key={skill}
-                className='px-3 py-1.5 border rounded-lg text-sm font-medium bg-green-900/30 border-green-500/30 text-green-300'
-              >
-                {skill}
-              </span>
-            ))}
+            {skills.map((skill, idx) => {
+              const colors = [
+                'bg-pink-900/30 border-pink-500/30 text-pink-300',
+                'bg-orange-900/30 border-orange-500/30 text-orange-300',
+                'bg-yellow-900/30 border-yellow-500/30 text-yellow-300',
+              ];
+              return (
+                <span
+                  key={skill}
+                  className={`px-3 py-1.5 border rounded-lg text-sm font-medium ${colors[idx % colors.length]}`}
+                >
+                  {skill}
+                </span>
+              );
+            })}
           </div>
 
           {/* Interests */}
-          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-green-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-pink-900/30 pb-4'>
             Interests
           </h2>
           <div className='flex flex-wrap gap-2'>
             {interests.map(interest => (
               <span
                 key={interest}
-                className='px-3 py-1.5 border border-green-500/30 bg-green-900/10 text-green-300 text-sm rounded-lg'
+                className='px-3 py-1.5 border border-orange-500/30 bg-orange-900/10 text-orange-300 text-sm rounded-lg'
               >
                 {interest}
               </span>
@@ -263,7 +270,7 @@ export default function Home() {
             </p>
             <a
               href='mailto:abbyramadan98@gmail.com'
-              className="inline-flex items-center px-6 py-3 bg-green-600 text-white hover:bg-green-700 transition-all duration-300 font-medium rounded-lg shadow-lg hover:shadow-green-500/30 group"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-500 to-orange-400 text-white hover:from-pink-600 hover:to-orange-500 transition-all duration-300 font-medium rounded-lg shadow-lg hover:shadow-pink-500/30 group"
             >
               Get in Touch
               <span className='ml-2 group-hover:translate-x-1 transition-transform'>→</span>

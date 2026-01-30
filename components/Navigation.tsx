@@ -48,7 +48,7 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-md z-50 border-b border-green-900/30">
+    <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-md z-50 border-b border-pink-900/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <a
@@ -66,8 +66,8 @@ const Navigation = () => {
                 onClick={(e) => handleClick(e, item.href)}
                 className={`transition-all duration-300 font-medium ${
                   activeSection === item.id
-                    ? "text-white border-b-2 border-green-500"
-                    : "text-gray-400 hover:text-green-300"
+                    ? "text-white border-b-2 border-pink-400"
+                    : "text-gray-400 hover:text-pink-300"
                 }`}
               >
                 {item.label}
