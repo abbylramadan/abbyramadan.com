@@ -107,7 +107,7 @@ export default function Home() {
             Abby Ramadan
           </h1>
           <p className='text-xl sm:text-2xl text-purple-300'>
-            Financial Analyst & Artist
+            Capital Markets Associate
           </p>
           <p className='text-gray-300 max-w-xl mx-auto'>
             Capital markets professional with expertise in structured finance,
