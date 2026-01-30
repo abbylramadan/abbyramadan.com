@@ -106,7 +106,7 @@ export default function Home() {
           <h1 className='text-5xl sm:text-7xl font-bold tracking-tight gradient-text'>
             Abby Ramadan
           </h1>
-          <p className='text-xl sm:text-2xl text-purple-300'>
+          <p className='text-xl sm:text-2xl text-green-300'>
             Capital Markets Associate
           </p>
           <p className='text-gray-300 max-w-xl mx-auto'>
@@ -121,14 +121,14 @@ export default function Home() {
               href='https://linkedin.com/in/abby-ramadan/'
               target='_blank'
               rel='noopener noreferrer'
-              className='text-purple-300 hover:text-purple-200 transition-colors underline underline-offset-4'
+              className='text-green-300 hover:text-green-200 transition-colors underline underline-offset-4'
             >
               LinkedIn
             </a>
             <span className='hidden sm:inline text-gray-600'>•</span>
             <a
               href='mailto:abbyramadan98@gmail.com'
-              className='text-purple-300 hover:text-purple-200 transition-colors underline underline-offset-4'
+              className='text-green-300 hover:text-green-200 transition-colors underline underline-offset-4'
             >
               Contact
             </a>
@@ -138,89 +138,34 @@ export default function Home() {
 
       {/* Projects Section */}
       <section id='projects' className='px-4 py-20'>
-        <div className='max-w-6xl mx-auto'>
-          <div className="mb-16 text-center space-y-4">
-            <h2 className="text-4xl sm:text-5xl font-bold">
-              Featured <span className="gradient-text">Project</span>
-            </h2>
-            <p className="text-xl text-gray-300">
-              Check out my home affordability analysis tool
-            </p>
-          </div>
+        <div className='max-w-4xl mx-auto'>
+          <h2 className="text-2xl font-semibold mb-8 border-b border-green-900/30 pb-4">
+            Featured <span className="gradient-text">Project</span>
+          </h2>
 
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-            <div className="relative bg-gray-900/90 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 sm:p-12 card-glow">
-              <div className="flex flex-col lg:flex-row gap-8 items-center">
-                <div className="flex-1 space-y-6 text-left">
-                  <div className="inline-block px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-full">
-                    <span className="text-sm font-medium text-purple-300 uppercase tracking-wider">
-                      Financial Tool
-                    </span>
-                  </div>
+            <div className="absolute -inset-1 bg-green-600 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-300"></div>
+            <div className="relative bg-gray-900/90 backdrop-blur-sm border border-gray-800 rounded-2xl p-8 card-glow">
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold">
+                  Home Affordability Calculator
+                </h3>
 
-                  <h3 className="text-3xl sm:text-4xl font-bold">
-                    Home Affordability Calculator
-                  </h3>
+                <p className="text-gray-300 leading-relaxed">
+                  A comprehensive tool that helps you understand exactly how much home you can afford.
+                  Features detailed mortgage calculations, interactive visualizations, and personalized
+                  affordability analysis based on your income, debts, and financial goals.
+                </p>
 
-                  <p className="text-gray-300 text-lg leading-relaxed">
-                    A comprehensive tool that helps you understand exactly how much home you can afford.
-                    Features detailed mortgage calculations, interactive visualizations, and personalized
-                    affordability analysis based on your income, debts, and financial goals.
-                  </p>
-
-                  <div className="flex flex-wrap gap-3">
-                    <span className="px-4 py-2 bg-purple-900/30 border border-purple-500/30 text-purple-300 rounded-lg text-sm font-medium">
-                      React
-                    </span>
-                    <span className="px-4 py-2 bg-pink-900/30 border border-pink-500/30 text-pink-300 rounded-lg text-sm font-medium">
-                      TypeScript
-                    </span>
-                    <span className="px-4 py-2 bg-blue-900/30 border border-blue-500/30 text-blue-300 rounded-lg text-sm font-medium">
-                      Financial Analysis
-                    </span>
-                    <span className="px-4 py-2 bg-cyan-900/30 border border-cyan-500/30 text-cyan-300 rounded-lg text-sm font-medium">
-                      Data Visualization
-                    </span>
-                  </div>
-
-                  <a
-                    href="https://mortgagecalc.abbyramadan.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all duration-300 font-medium text-lg rounded-lg shadow-lg hover:shadow-purple-500/50 group"
-                  >
-                    Launch Calculator
-                    <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
-                  </a>
-                </div>
-
-                <div className="flex-shrink-0 lg:w-80">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl blur-2xl opacity-20"></div>
-                    <div className="relative bg-gradient-to-br from-purple-900/40 to-pink-900/40 border border-purple-500/30 rounded-xl p-8 backdrop-blur-sm">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-400">Monthly Payment</span>
-                          <span className="text-2xl font-bold text-purple-300">$2,847</span>
-                        </div>
-                        <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style={{width: '68%'}}></div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 pt-4">
-                          <div className="text-center p-3 bg-gray-800/50 rounded-lg">
-                            <div className="text-xs text-gray-400 mb-1">Max Home Price</div>
-                            <div className="text-lg font-bold text-pink-300">$485K</div>
-                          </div>
-                          <div className="text-center p-3 bg-gray-800/50 rounded-lg">
-                            <div className="text-xs text-gray-400 mb-1">Down Payment</div>
-                            <div className="text-lg font-bold text-blue-300">20%</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <a
+                  href="https://mortgagecalc.abbyramadan.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-6 py-3 bg-green-600 text-white hover:bg-green-700 transition-all duration-300 font-medium rounded-lg shadow-lg hover:shadow-green-500/30 group"
+                >
+                  Launch Calculator
+                  <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                </a>
               </div>
             </div>
           </div>
@@ -230,7 +175,7 @@ export default function Home() {
       {/* Experience Section */}
       <section id='experience' className='px-4 pb-20'>
         <div className='max-w-4xl mx-auto'>
-          <h2 className='text-2xl font-semibold mb-8 border-b border-purple-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mb-8 border-b border-green-900/30 pb-4'>
             Experience
           </h2>
           <div className='flex flex-col gap-10'>
@@ -246,7 +191,7 @@ export default function Home() {
                 <ul className='flex flex-col gap-2 text-sm text-gray-300'>
                   {exp.achievements.map((achievement, i) => (
                     <li key={i} className='flex items-start'>
-                      <span className='text-purple-500 mr-3'>-</span>
+                      <span className='text-green-500 mr-3'>-</span>
                       <span>{achievement}</span>
                     </li>
                   ))}
@@ -256,7 +201,7 @@ export default function Home() {
           </div>
 
           {/* Education */}
-          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-purple-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-green-900/30 pb-4'>
             Education
           </h2>
           <div className='flex flex-col gap-6'>
@@ -282,37 +227,29 @@ export default function Home() {
           </div>
 
           {/* Skills */}
-          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-purple-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-green-900/30 pb-4'>
             Skills
           </h2>
           <div className='flex flex-wrap gap-2'>
-            {skills.map((skill, idx) => {
-              const colors = [
-                'bg-purple-900/30 border-purple-500/30 text-purple-300',
-                'bg-pink-900/30 border-pink-500/30 text-pink-300',
-                'bg-blue-900/30 border-blue-500/30 text-blue-300',
-                'bg-cyan-900/30 border-cyan-500/30 text-cyan-300'
-              ];
-              return (
-                <span
-                  key={skill}
-                  className={`px-3 py-1.5 border rounded-lg text-sm font-medium ${colors[idx % colors.length]}`}
-                >
-                  {skill}
-                </span>
-              );
-            })}
+            {skills.map((skill) => (
+              <span
+                key={skill}
+                className='px-3 py-1.5 border rounded-lg text-sm font-medium bg-green-900/30 border-green-500/30 text-green-300'
+              >
+                {skill}
+              </span>
+            ))}
           </div>
 
           {/* Interests */}
-          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-purple-900/30 pb-4'>
+          <h2 className='text-2xl font-semibold mt-16 mb-8 border-b border-green-900/30 pb-4'>
             Interests
           </h2>
           <div className='flex flex-wrap gap-2'>
             {interests.map(interest => (
               <span
                 key={interest}
-                className='px-3 py-1.5 border border-purple-500/30 bg-purple-900/10 text-purple-300 text-sm rounded-lg'
+                className='px-3 py-1.5 border border-green-500/30 bg-green-900/10 text-green-300 text-sm rounded-lg'
               >
                 {interest}
               </span>
@@ -326,7 +263,7 @@ export default function Home() {
             </p>
             <a
               href='mailto:abbyramadan98@gmail.com'
-              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all duration-300 font-medium text-lg rounded-lg shadow-lg hover:shadow-purple-500/50 group"
+              className="inline-flex items-center px-6 py-3 bg-green-600 text-white hover:bg-green-700 transition-all duration-300 font-medium rounded-lg shadow-lg hover:shadow-green-500/30 group"
             >
               Get in Touch
               <span className='ml-2 group-hover:translate-x-1 transition-transform'>→</span>
