@@ -88,11 +88,13 @@ const rows: Row[] = [
 ];
 
 export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelection) => void }) {
-  const [selectedRowIdx, setSelectedRowIdx] = useState<number | null>(null);
+  const [selected, setSelected] = useState<[number, number] | null>(null);
 
-  function handleRowClick(ri: number) {
-    setSelectedRowIdx(ri);
-    onSelect({ ref: rows[ri].ref, formula: rows[ri].formula });
+  function handleCellClick(ri: number, ci: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    setSelected([ri, ci]);
+    const colLetter = ['B','C','D','E','F'][ci];
+    onSelect({ ref: `${colLetter}${ri + 1}`, formula: rows[ri].formula });
   }
 
   return (
@@ -118,29 +120,34 @@ export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelectio
           {rows.map((r, ri) => {
             const [cellB, cellC, cellD, cellE, cellF] = r.cells;
             const h = r.height ?? 20;
-            const isSelected = selectedRowIdx === ri;
             const cSpansAll = cellD.value === '' && cellE.value === '' && cellF.value === '';
+            const isCellSel = (ci: number) => selected?.[0] === ri && selected?.[1] === ci;
 
             return (
-              <tr key={ri} style={{ height: h }} onClick={() => handleRowClick(ri)}>
-                <td style={{ ...rowNumStyle, background: isSelected ? '#bdd7ee' : '#f0f0f0', fontWeight: isSelected ? 700 : 400 }}>
+              <tr key={ri} style={{ height: h }}>
+                <td style={{ ...rowNumStyle, background: selected?.[0] === ri ? '#e0eedb' : '#f0f0f0', fontWeight: selected?.[0] === ri ? 700 : 400 }}>
                   {ri + 1}
                 </td>
-                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
+                <td style={gridCell(h, '#fff')} onClick={(e) => handleCellClick(ri, 0, e)} />
 
                 {cSpansAll ? (
                   <td colSpan={4} style={{
                     ...contentCell(h),
                     fontWeight: cellC.bold ? 700 : 400,
                     color: cellC.color ?? '#212121',
-                    background: isSelected ? (cellC.bg ?? '#e8f0fe') : (cellC.bg ?? '#fff'),
+                    background: cellC.bg ?? '#fff',
                     fontStyle: cellC.italic ? 'italic' : 'normal',
                     textDecoration: cellC.link ? 'underline' : undefined,
                     cursor: cellC.link ? 'pointer' : 'cell',
                     whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
-                  }}
-                    onClick={cellC.link ? (ev) => { ev.stopPropagation(); window.open(cellC.link, '_blank'); } : undefined}
-                  >
+                    outline: isCellSel(1) ? '2px solid #217346' : undefined,
+                    outlineOffset: '-2px',
+                    zIndex: isCellSel(1) ? 2 : undefined,
+                    position: 'relative',
+                  }} onClick={(e) => {
+                    handleCellClick(ri, 1, e);
+                    if (cellC.link) window.open(cellC.link, '_blank');
+                  }}>
                     {cellC.value}
                   </td>
                 ) : (
@@ -149,25 +156,30 @@ export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelectio
                       <td key={ci} style={{
                         ...contentCell(h),
                         fontWeight: cell.bold ? 700 : 400,
-                        color: isSelected ? (cell.bg ? cell.color : '#1565c0') : (cell.color ?? '#212121'),
-                        background: isSelected ? (cell.bg ?? '#e8f0fe') : (cell.bg ?? '#fff'),
+                        color: cell.color ?? '#212121',
+                        background: cell.bg ?? '#fff',
                         fontStyle: cell.italic ? 'italic' : 'normal',
                         textAlign: cell.align ?? 'left',
                         textDecoration: cell.link ? 'underline' : undefined,
                         cursor: cell.link ? 'pointer' : 'cell',
                         whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
-                      }}
-                        onClick={cell.link ? (ev) => { ev.stopPropagation(); window.open(cell.link, '_blank'); } : undefined}
-                      >
+                        outline: isCellSel(ci + 1) ? '2px solid #217346' : undefined,
+                        outlineOffset: '-2px',
+                        zIndex: isCellSel(ci + 1) ? 2 : undefined,
+                        position: 'relative',
+                      }} onClick={(e) => {
+                        handleCellClick(ri, ci + 1, e);
+                        if (cell.link) window.open(cell.link, '_blank');
+                      }}>
                         {cell.value}
                       </td>
                     ))}
                   </>
                 )}
 
-                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
-                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
-                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
+                <td style={gridCell(h, '#fff')} onClick={(e) => handleCellClick(ri, 5, e)} />
+                <td style={gridCell(h, '#fff')} onClick={(e) => handleCellClick(ri, 6, e)} />
+                <td style={gridCell(h, '#fff')} onClick={(e) => handleCellClick(ri, 7, e)} />
               </tr>
             );
           })}

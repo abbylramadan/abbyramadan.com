@@ -170,11 +170,15 @@ const rows: Row[] = [
 ];
 
 export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection) => void }) {
-  const [selectedRowIdx, setSelectedRowIdx] = useState<number | null>(null);
+  // [rowIdx, colIdx] where colIdx 0=B,1=C,2=D,3=E,4=F
+  const [selected, setSelected] = useState<[number, number] | null>(null);
 
-  function handleRowClick(ri: number) {
-    setSelectedRowIdx(ri);
-    onSelect({ ref: rows[ri].ref, formula: rows[ri].formula });
+  function handleCellClick(ri: number, ci: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    setSelected([ri, ci]);
+    // col letters for the content cols: B=1,C=2,D=3,E=4,F=5 (offset by 1 for row-num col)
+    const colLetter = ['B','C','D','E','F'][ci];
+    onSelect({ ref: `${colLetter}${ri + 1}`, formula: rows[ri].formula });
   }
 
   return (
@@ -200,71 +204,61 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
           {rows.map((r, ri) => {
             const [cellB, cellC, cellD, cellE, cellF] = r.cells;
             const h = r.height ?? 20;
-            const isSelected = selectedRowIdx === ri;
             const cSpansAll = cellD.value === '' && cellE.value === '' && cellF.value === '';
+            const isCellSel = (ci: number) => selected?.[0] === ri && selected?.[1] === ci;
 
             return (
-              <tr key={ri} style={{ height: h }} onClick={() => handleRowClick(ri)}>
-                <td style={{ ...rowNumStyle, background: isSelected ? '#bdd7ee' : '#f0f0f0', fontWeight: isSelected ? 700 : 400 }}>
+              <tr key={ri} style={{ height: h }}>
+                <td style={{ ...rowNumStyle, background: selected?.[0] === ri ? '#e0eedb' : '#f0f0f0', fontWeight: selected?.[0] === ri ? 700 : 400 }}>
                   {ri + 1}
                 </td>
-                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
+                <td style={gridCell(h, '#fff')} onClick={(e) => handleCellClick(ri, 0, e)} />
 
                 {cSpansAll ? (
                   <td colSpan={4} style={{
                     ...contentCell(h),
                     fontWeight: cellC.bold ? 700 : 400,
                     color: cellC.color ?? '#212121',
-                    background: isSelected ? (cellC.bg ?? '#e8f0fe') : (cellC.bg ?? '#fff'),
+                    background: cellC.bg ?? '#fff',
                     fontStyle: cellC.italic ? 'italic' : 'normal',
                     paddingLeft: 8 + (cellC.indent ?? 0) * 16,
-                    whiteSpace: 'normal',
-                    wordBreak: 'break-word',
-                    lineHeight: '1.35',
-                    verticalAlign: 'middle',
-                  }}>
+                    whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
+                    outline: isCellSel(1) ? '2px solid #217346' : undefined,
+                    outlineOffset: '-2px',
+                    zIndex: isCellSel(1) ? 2 : undefined,
+                    position: 'relative',
+                  }} onClick={(e) => handleCellClick(ri, 1, e)}>
                     {cellC.value}
                   </td>
                 ) : (
                   <>
-                    <td style={{
-                      ...contentCell(h),
-                      fontWeight: cellC.bold ? 700 : 400,
-                      color: cellC.color ?? '#212121',
-                      background: isSelected ? '#e8f0fe' : (cellC.bg ?? '#fff'),
-                      fontStyle: cellC.italic ? 'italic' : 'normal',
-                      paddingLeft: 8 + (cellC.indent ?? 0) * 16,
-                      whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
-                    }}>{cellC.value}</td>
-                    <td style={{
-                      ...contentCell(h),
-                      fontWeight: cellD.bold ? 700 : 400,
-                      color: cellD.color ?? '#212121',
-                      background: isSelected ? '#e8f0fe' : (cellD.bg ?? '#fff'),
-                      fontStyle: cellD.italic ? 'italic' : 'normal',
-                    }}>{cellD.value}</td>
-                    <td style={{
-                      ...contentCell(h),
-                      fontWeight: cellE.bold ? 700 : 400,
-                      color: cellE.color ?? '#212121',
-                      background: isSelected ? '#e8f0fe' : (cellE.bg ?? '#fff'),
-                      fontStyle: cellE.italic ? 'italic' : 'normal',
-                      textAlign: cellE.align ?? 'left',
-                    }}>{cellE.value}</td>
-                    <td style={{
-                      ...contentCell(h),
-                      fontWeight: cellF.bold ? 700 : 400,
-                      color: cellF.color ?? '#212121',
-                      background: isSelected ? '#e8f0fe' : (cellF.bg ?? '#fff'),
-                      fontStyle: cellF.italic ? 'italic' : 'normal',
-                      textAlign: cellF.align ?? 'left',
-                    }}>{cellF.value}</td>
+                    {([
+                      { cell: cellC, ci: 1, extra: { paddingLeft: 8 + (cellC.indent ?? 0) * 16, whiteSpace: 'normal' as const, wordBreak: 'break-word' as const, lineHeight: '1.35', verticalAlign: 'middle' as const } },
+                      { cell: cellD, ci: 2, extra: {} },
+                      { cell: cellE, ci: 3, extra: { textAlign: cellE.align ?? 'left' as const } },
+                      { cell: cellF, ci: 4, extra: { textAlign: cellF.align ?? 'left' as const } },
+                    ]).map(({ cell, ci, extra }) => (
+                      <td key={ci} style={{
+                        ...contentCell(h),
+                        ...extra,
+                        fontWeight: cell.bold ? 700 : 400,
+                        color: cell.color ?? '#212121',
+                        background: cell.bg ?? '#fff',
+                        fontStyle: cell.italic ? 'italic' : 'normal',
+                        outline: isCellSel(ci) ? '2px solid #217346' : undefined,
+                        outlineOffset: '-2px',
+                        zIndex: isCellSel(ci) ? 2 : undefined,
+                        position: 'relative',
+                      }} onClick={(e) => handleCellClick(ri, ci, e)}>
+                        {cell.value}
+                      </td>
+                    ))}
                   </>
                 )}
 
-                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
-                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
-                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
+                <td style={gridCell(h, '#fff')} onClick={(e) => handleCellClick(ri, 5, e)} />
+                <td style={gridCell(h, '#fff')} onClick={(e) => handleCellClick(ri, 6, e)} />
+                <td style={gridCell(h, '#fff')} onClick={(e) => handleCellClick(ri, 7, e)} />
               </tr>
             );
           })}
