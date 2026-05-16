@@ -439,34 +439,37 @@ export default function ExcelShell() {
       </div>
 
       {/* Ribbon content */}
-      <div className="flex items-stretch bg-white border-b-2 border-[#217346] px-2 shrink-0 overflow-x-auto" style={{ minHeight: 72 }}>
+      <div style={{ display: 'flex', alignItems: 'stretch', background: '#fff', borderBottom: '2px solid #217346', padding: '0 8px', flexShrink: 0, minHeight: 72, overflowX: 'auto' }}>
         {groups.map((group, gi) => (
-          <div key={gi} className="flex items-stretch">
-            {/* Group buttons */}
-            <div className="flex flex-col justify-between py-1 px-1">
-              <div className="flex items-end gap-px">
+          <div key={gi} style={{ display: 'flex', alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '4px 4px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
                 {group.buttons.map((btn, bi) => (
                   <button
                     key={bi}
                     title={btn.label}
-                    style={{ fontFamily: "'Calibri', 'Segoe UI', Arial, sans-serif" }}
-                    className="flex flex-col items-center justify-center gap-1 px-2 py-1.5 min-w-[44px] rounded hover:bg-[#e8e8e8] active:bg-[#d8d8d8] border border-transparent hover:border-[#c8c8c8] transition-colors cursor-pointer"
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      gap: 3, padding: '4px 6px', minWidth: 40, borderRadius: 3,
+                      border: '1px solid transparent', background: 'none', cursor: 'pointer',
+                      fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#e8e8e8'; (e.currentTarget as HTMLElement).style.borderColor = '#c8c8c8'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.borderColor = 'transparent'; }}
                   >
-                    <span className={`text-xl leading-none text-[#333] ${(btn as { style?: string }).style ?? ''}`}>
+                    <span style={{ fontSize: 18, lineHeight: 1, color: '#333' }} className={(btn as { style?: string }).style ?? ''}>
                       {btn.icon}
                     </span>
-                    <span className="text-[10px] leading-tight text-[#444] whitespace-nowrap">{btn.label}</span>
+                    <span style={{ fontSize: 10, color: '#444', whiteSpace: 'nowrap' }}>{btn.label}</span>
                   </button>
                 ))}
               </div>
-              {/* Group label */}
-              <div className="text-[10px] text-[#666] text-center border-t border-[#e0e0e0] pt-0.5 mt-0.5 px-1">
+              <div style={{ fontSize: 10, color: '#666', textAlign: 'center', borderTop: '1px solid #e0e0e0', padding: '2px 4px 3px', marginTop: 2 }}>
                 {group.label}
               </div>
             </div>
-            {/* Group divider */}
             {gi < groups.length - 1 && (
-              <div className="w-px bg-[#e0e0e0] my-2 mx-1 self-stretch" />
+              <div style={{ width: 1, background: '#e0e0e0', margin: '6px 4px' }} />
             )}
           </div>
         ))}

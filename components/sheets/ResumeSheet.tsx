@@ -291,63 +291,35 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
                 }} />
 
                 {bullet ? (
-                  // Bullet row: B spans B+C+D (tci 2–4), E is its own empty cell
+                  // Bullet row: no colSpan — B has overflow:visible so text spills into C/D visually,
+                  // but each cell is its own td so column highlighting works correctly per-column.
                   <>
-                    <td colSpan={3} onClick={(ev) => onCellClick(ri, 2, ev)} style={{
-                      ...td(h, '#fff'),
-                      fontWeight: 400,
-                      color: r.b.color ?? '#222',
-                      fontStyle: 'normal',
-                      paddingLeft: 8,
-                      whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
-                      cursor: 'cell', overflow: 'visible',
-                      position: 'relative',
-                    }}>
-                      {/* Col B highlight overlay — clipped to col B width only */}
-                      {(sel?.type === 'col' && sel.tci === 2) && (
-                        <div style={{
-                          position: 'absolute',
-                          left: 0, top: 0,
-                          width: COL_WIDTHS[2],
-                          height: '100%',
-                          background: SEL_BG,
-                          boxShadow: `inset 2px 0 0 0 ${SEL}, inset -2px 0 0 0 ${SEL}`
-                            + (ri === 0 ? `, inset 0 2px 0 0 ${SEL}` : '')
-                            + (ri === TOTAL - 1 ? `, inset 0 -2px 0 0 ${SEL}` : ''),
-                          pointerEvents: 'none',
-                          zIndex: 1,
-                        }} />
-                      )}
-                      {/* Row highlight for bullet row */}
-                      {(sel?.type === 'row' && sel.ri === ri) && (
-                        <div style={{
-                          position: 'absolute',
-                          left: 0, top: 0,
-                          width: '100%', height: '100%',
-                          background: SEL_BG,
-                          boxShadow: `inset 0 2px 0 0 ${SEL}, inset 0 -2px 0 0 ${SEL}, inset 2px 0 0 0 ${SEL}`,
-                          pointerEvents: 'none',
-                          zIndex: 1,
-                        }} />
-                      )}
-                      {/* Cell click highlight for bullet row */}
-                      {(sel?.type === 'cell' && sel.ri === ri && sel.tci === 2) && (
-                        <div style={{
-                          position: 'absolute',
-                          left: 0, top: 0,
-                          width: '100%', height: '100%',
-                          boxShadow: `inset 0 0 0 2px ${SEL}`,
-                          pointerEvents: 'none',
-                          zIndex: 1,
-                        }} />
-                      )}
-                      <span style={{ position: 'relative', zIndex: 2 }}>{r.b.value}</span>
-                    </td>
-                    <td onClick={(ev) => onCellClick(ri, 5, ev)} style={{
-                      ...td(h, cellBg(ri, 5, r.e.bg)),
-                      cursor: 'cell',
-                      boxShadow: selBoxShadow(sel, ri, 5, TOTAL, FIRST_COL, LAST_COL),
-                    }} />
+                    {([
+                      { tci: 2, c: r.b },
+                      { tci: 3, c: r.c },
+                      { tci: 4, c: r.d },
+                      { tci: 5, c: r.e },
+                    ] as { tci: number; c: Cell }[]).map(({ tci, c }) => (
+                      <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
+                        ...td(h, cellBg(ri, tci, c.bg)),
+                        fontWeight: 400,
+                        color: c.color ?? '#222',
+                        fontStyle: 'normal',
+                        // B overflows into C/D visually; C/D are transparent so B text shows through
+                        overflow: tci === 2 ? 'visible' : 'hidden',
+                        whiteSpace: tci === 2 ? 'nowrap' : 'normal',
+                        // C and D: transparent bg unless highlighted, no left border so text flows
+                        background: (tci === 3 || tci === 4)
+                          ? cellBg(ri, tci, 'transparent')
+                          : cellBg(ri, tci, c.bg),
+                        borderLeft: (tci === 3 || tci === 4) ? 'none' : undefined,
+                        lineHeight: '1.35', verticalAlign: 'middle',
+                        cursor: 'cell',
+                        boxShadow: selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL),
+                      }}>
+                        {c.value}
+                      </td>
+                    ))}
                   </>
                 ) : (
                   // All other rows: individual B C D E cells
