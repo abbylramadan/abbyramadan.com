@@ -3,11 +3,15 @@
 import { useState } from 'react';
 import type { CellSelection } from '../ExcelShell';
 
-// Table columns:
-// 0=row#  1=A(filler,30)  2=B(180)  3=C(220)  4=D(180)  5=E(130)  6=F(60)  7=G(60)  8=H(60)
+// col indices: 0=row#  1=A(filler)  2=B  3=C  4=D  5=E  6=F  7=G  8=H
 const COLS = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const COL_WIDTHS = [36, 30, 180, 220, 180, 130, 60, 60, 60];
 const BORDER = '1px solid #d0d7de';
+
+const G = '#217346';
+const LG = '#e9f5ee';
+const MG = '#107c41';
+const W = '#ffffff';
 
 type Cell = {
   value: string;
@@ -19,83 +23,83 @@ type Cell = {
   align?: 'left' | 'center' | 'right';
 };
 
-const G = '#217346';
-const LG = '#e9f5ee';
-const MG = '#107c41';
-const W = '#ffffff';
-
-function e(): Cell { return { value: '' }; }
-function hdr(v: string): Cell { return { value: v, bold: true, bg: G, color: W }; }
-function sect(v: string): Cell { return { value: v, bold: true, bg: MG, color: W }; }
-function lbl(v: string): Cell { return { value: v, bold: true, color: '#1a1a1a' }; }
-function plain(v: string): Cell { return { value: v, color: '#222' }; }
-function tag(v: string): Cell { return { value: v, color: '#217346', bg: LG }; }
-function lnk(v: string, href: string): Cell { return { value: v, color: '#0563c1', link: href }; }
-
-// Each row has 4 content cells: [B, C, D, E] — all rendered individually (no merged spans for projects)
 type Row = {
-  cells: [Cell, Cell, Cell, Cell]; // B C D E
+  b: Cell; c: Cell; d: Cell; e: Cell;
   height?: number;
   ref: string;
   formula: string;
-  spanAll?: boolean; // B spans all 4 cols (header rows)
 };
 
-function srow(ref: string, formula: string, b: Cell, height?: number): Row {
-  return { ref, formula, spanAll: true, cells: [b, e(), e(), e()], height };
+function ec(): Cell { return { value: '' }; }
+function hdr(v: string): Cell { return { value: v, bold: true, bg: G,  color: W }; }
+function sect(v: string): Cell { return { value: v, bold: true, bg: MG, color: W }; }
+function lbl(v: string): Cell { return { value: v, bold: true, color: '#1a1a1a' }; }
+function plain(v: string): Cell { return { value: v, color: '#222' }; }
+function tag(v: string): Cell { return { value: v, color: G, bg: LG }; }
+function lnk(v: string, href: string): Cell { return { value: v, color: '#0563c1', link: href }; }
+
+function sectionRow(ref: string, formula: string, b: Cell, height?: number): Row {
+  return { ref, formula, height, b, c: { value: '', bg: b.bg }, d: { value: '', bg: b.bg }, e: { value: '', bg: b.bg } };
+}
+function spacer(height = 6): Row {
+  return { ref: '', formula: '=""', height, b: ec(), c: ec(), d: ec(), e: ec() };
 }
 
 const rows: Row[] = [
-  srow('B1', '="Projects"', hdr('PROJECTS')),
-  { ref: '', formula: '=""', cells: [e(), e(), e(), e()], height: 6 },
+  sectionRow('B1', '="Projects"', hdr('PROJECTS')),
+  spacer(6),
 
-  // Project table header
-  { ref: 'B3', formula: '=XLOOKUP("project_header",Projects!A:A,Projects!B:B)', cells: [sect('Project'), sect('Description'), sect('Technologies'), sect('Status')] },
-  // Project row
-  {
-    ref: 'B4', formula: '=XLOOKUP("home_calc",Projects!A:A,Projects!B:B)',
-    cells: [
-      lnk('Home Affordability Calculator', 'https://mortgagecalc.abbyramadan.com'),
-      plain('Comprehensive tool for understanding home affordability. Features mortgage calculations, interactive visualizations, and personalized analysis based on income, debts, and financial goals.'),
-      tag('React · TypeScript · Chart.js · Tailwind CSS'),
-      { value: '✅ Live', color: G, bold: true },
-    ],
-    height: 42,
-  },
-  { ref: '', formula: '=""', cells: [e(), e(), e(), e()], height: 6 },
-  { ref: 'B6', formula: '=XLOOKUP("more_projects",Projects!A:A,Projects!B:B)', cells: [{ value: 'More projects coming soon...', italic: true, color: '#555' }, e(), e(), e()] },
-  { ref: '', formula: '=""', cells: [e(), e(), e(), e()], height: 14 },
+  // Project table — header row
+  { ref: 'B3', formula: '=XLOOKUP("project_header",Projects!A:A,Projects!B:B)',
+    b: sect('Project'), c: sect('Description'), d: sect('Technologies'), e: sect('Status') },
+  // Project data row
+  { ref: 'B4', formula: '=XLOOKUP("home_calc",Projects!A:A,Projects!B:B)', height: 42,
+    b: lnk('Home Affordability Calculator', 'https://mortgagecalc.abbyramadan.com'),
+    c: plain('Comprehensive tool for understanding home affordability. Features mortgage calculations, interactive visualizations, and personalized analysis based on income, debts, and financial goals.'),
+    d: tag('React · TypeScript · Chart.js · Tailwind CSS'),
+    e: { value: '✅ Live', color: G, bold: true } },
+  spacer(6),
+  { ref: 'B6', formula: '=XLOOKUP("more_projects",Projects!A:A,Projects!B:B)',
+    b: { value: 'More projects coming soon...', italic: true, color: '#555' }, c: ec(), d: ec(), e: ec() },
+  spacer(14),
 
-  srow('B8', '="Skills"', hdr('SKILLS')),
-  { ref: '', formula: '=""', cells: [e(), e(), e(), e()], height: 6 },
+  sectionRow('B8', '="Skills"', hdr('SKILLS')),
+  spacer(6),
 
-  // Skills table header
-  { ref: 'B10', formula: '=XLOOKUP("skill_header",Skills!A:A,Skills!B:B)', cells: [sect('Skill'), sect('Category'), sect('Proficiency'), e()] },
-  { ref: 'B11', formula: '=XLOOKUP("excel",Skills!A:A,Skills!B:B)',         cells: [lbl('Excel'),         plain('Finance / Reporting'), { value: '★★★★★  Advanced',    color: G,     bold: true }, e()] },
-  { ref: 'B12', formula: '=XLOOKUP("sql",Skills!A:A,Skills!B:B)',           cells: [lbl('SQL'),           plain('Data / Reporting'),    { value: '★★★★☆  Advanced',    color: G,     bold: true }, e()] },
-  { ref: 'B13', formula: '=XLOOKUP("forecasting",Skills!A:A,Skills!B:B)',   cells: [lbl('Forecasting'),   plain('Finance'),             { value: '★★★★☆  Advanced',    color: G,     bold: true }, e()] },
-  { ref: 'B14', formula: '=XLOOKUP("python",Skills!A:A,Skills!B:B)',        cells: [lbl('Python'),        plain('Analytics'),           { value: '★★★☆☆  Intermediate', color: '#555'           }, e()] },
-  { ref: 'B15', formula: '=XLOOKUP("r",Skills!A:A,Skills!B:B)',             cells: [lbl('R'),             plain('Analytics'),           { value: '★★★☆☆  Intermediate', color: '#555'           }, e()] },
-  { ref: 'B16', formula: '=XLOOKUP("tableau",Skills!A:A,Skills!B:B)',       cells: [lbl('Tableau'),       plain('Visualization'),       { value: '★★★☆☆  Intermediate', color: '#555'           }, e()] },
-  { ref: 'B17', formula: '=XLOOKUP("powerbi",Skills!A:A,Skills!B:B)',       cells: [lbl('PowerBI'),       plain('Visualization'),       { value: '★★★☆☆  Intermediate', color: '#555'           }, e()] },
-  { ref: 'B18', formula: '=XLOOKUP("power_automate",Skills!A:A,Skills!B:B)',cells: [lbl('Power Automate'),plain('Automation'),          { value: '★★★☆☆  Intermediate', color: '#555'           }, e()] },
-  { ref: '', formula: '=""', cells: [e(), e(), e(), e()], height: 20 },
+  // Skills table — header row
+  { ref: 'B10', formula: '=XLOOKUP("skill_header",Skills!A:A,Skills!B:B)',
+    b: sect('Skill'), c: sect('Category'), d: sect('Proficiency'), e: ec() },
+  { ref: 'B11', formula: '=XLOOKUP("excel",Skills!A:A,Skills!B:B)',
+    b: lbl('Excel'), c: plain('Finance / Reporting'), d: { value: '★★★★★  Advanced', color: G, bold: true }, e: ec() },
+  { ref: 'B12', formula: '=XLOOKUP("sql",Skills!A:A,Skills!B:B)',
+    b: lbl('SQL'), c: plain('Data / Reporting'), d: { value: '★★★★☆  Advanced', color: G, bold: true }, e: ec() },
+  { ref: 'B13', formula: '=XLOOKUP("forecasting",Skills!A:A,Skills!B:B)',
+    b: lbl('Forecasting'), c: plain('Finance'), d: { value: '★★★★☆  Advanced', color: G, bold: true }, e: ec() },
+  { ref: 'B14', formula: '=XLOOKUP("python",Skills!A:A,Skills!B:B)',
+    b: lbl('Python'), c: plain('Analytics'), d: { value: '★★★☆☆  Intermediate', color: '#555' }, e: ec() },
+  { ref: 'B15', formula: '=XLOOKUP("r",Skills!A:A,Skills!B:B)',
+    b: lbl('R'), c: plain('Analytics'), d: { value: '★★★☆☆  Intermediate', color: '#555' }, e: ec() },
+  { ref: 'B16', formula: '=XLOOKUP("tableau",Skills!A:A,Skills!B:B)',
+    b: lbl('Tableau'), c: plain('Visualization'), d: { value: '★★★☆☆  Intermediate', color: '#555' }, e: ec() },
+  { ref: 'B17', formula: '=XLOOKUP("powerbi",Skills!A:A,Skills!B:B)',
+    b: lbl('PowerBI'), c: plain('Visualization'), d: { value: '★★★☆☆  Intermediate', color: '#555' }, e: ec() },
+  { ref: 'B18', formula: '=XLOOKUP("power_automate",Skills!A:A,Skills!B:B)',
+    b: lbl('Power Automate'), c: plain('Automation'), d: { value: '★★★☆☆  Intermediate', color: '#555' }, e: ec() },
+  spacer(20),
 ];
 
-export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelection) => void }) {
-  const [sel, setSel] = useState<
-    | { type: 'cell'; ri: number; tci: number }
-    | { type: 'col'; tci: number }
-    | { type: 'row'; ri: number }
-    | null
-  >(null);
+type Sel =
+  | { type: 'cell'; ri: number; tci: number }
+  | { type: 'col';  tci: number }
+  | { type: 'row';  ri: number }
+  | null;
 
-  const hlCol = sel?.type === 'col' ? sel.tci : -1;
-  const hlRow = sel?.type === 'row' ? sel.ri : -1;
+export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelection) => void }) {
+  const [sel, setSel] = useState<Sel>(null);
 
   function onColHeaderClick(tci: number) {
     setSel({ type: 'col', tci });
-    onSelect({ ref: `${COLS[tci]}`, formula: `=COLUMN(${COLS[tci]}:${COLS[tci]})` });
+    onSelect({ ref: `${COLS[tci]}:${COLS[tci]}`, formula: `=COLUMN(${COLS[tci]}:${COLS[tci]})` });
   }
   function onRowNumClick(ri: number, ev: React.MouseEvent) {
     ev.stopPropagation();
@@ -105,31 +109,31 @@ export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelectio
   function onCellClick(ri: number, tci: number, ev: React.MouseEvent, link?: string) {
     ev.stopPropagation();
     setSel({ type: 'cell', ri, tci });
-    const colLetter = COLS[tci] ?? 'B';
-    onSelect({ ref: `${colLetter}${ri + 1}`, formula: rows[ri]?.formula ?? '=""' });
+    onSelect({ ref: `${COLS[tci] ?? 'B'}${ri + 1}`, formula: rows[ri]?.formula ?? '=""' });
     if (link) window.open(link, '_blank');
   }
 
-  function thBg(tci: number) {
-    if (hlCol === tci) return '#e2efda';
-    if (sel?.type === 'cell' && sel.tci === tci) return '#e2efda';
-    return '#f0f0f0';
-  }
-  function rnBg(ri: number) {
-    if (hlRow === ri) return '#e2efda';
-    if (sel?.type === 'cell' && sel.ri === ri) return '#e2efda';
-    return '#f0f0f0';
-  }
-  function isCellSel(ri: number, tci: number) {
-    return sel?.type === 'cell' && sel.ri === ri && sel.tci === tci;
-  }
-  function bodyBg(tci: number, baseBg?: string) {
-    if (hlCol === tci) return baseBg === G || baseBg === MG ? baseBg : (baseBg === LG ? '#daf0e3' : '#e2efda');
+  const activeCol = sel?.type === 'col'  ? sel.tci : sel?.type === 'cell' ? sel.tci : -1;
+  const activeRow = sel?.type === 'row'  ? sel.ri  : sel?.type === 'cell' ? sel.ri  : -1;
+
+  function thBg(tci: number) { return activeCol === tci ? '#e2efda' : '#f0f0f0'; }
+  function rnBg(ri: number)  { return activeRow === ri  ? '#e2efda' : '#f0f0f0'; }
+
+  function bg(ri: number, tci: number, baseBg?: string): string {
+    const colHL = sel?.type === 'col' && sel.tci === tci;
+    const rowHL = sel?.type === 'row' && sel.ri === ri;
+    if (colHL || rowHL) {
+      if (baseBg === G || baseBg === MG) return baseBg;
+      if (baseBg === LG) return '#c6e8d1';
+      return '#e2efda';
+    }
     return baseBg ?? '#fff';
   }
 
-  // content col tci values: B=2, C=3, D=4, E=5
-  const CONTENT_TCIS = [2, 3, 4, 5];
+  function outline(ri: number, tci: number): React.CSSProperties {
+    if (sel?.type !== 'cell' || sel.ri !== ri || sel.tci !== tci) return {};
+    return { outline: '2px solid #217346', outlineOffset: '-2px', position: 'relative', zIndex: 2 };
+  }
 
   return (
     <div className="h-full overflow-auto" style={{ background: '#fff' }}>
@@ -143,11 +147,9 @@ export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelectio
             <th style={{ ...thStyle(36), background: sel ? '#e2efda' : '#f0f0f0', cursor: 'default' }} />
             {COLS.slice(1).map((label, i) => {
               const tci = i + 1;
-              const active = hlCol === tci || (sel?.type === 'cell' && sel.tci === tci);
               return (
-                <th key={i}
-                  style={{ ...thStyle(COL_WIDTHS[i + 1]), background: thBg(tci), color: active ? '#217346' : '#555', fontWeight: active ? 700 : 600, cursor: 'pointer' }}
-                  onClick={() => onColHeaderClick(tci)}>
+                <th key={tci} onClick={() => onColHeaderClick(tci)}
+                  style={{ ...thStyle(COL_WIDTHS[tci]), background: thBg(tci), color: activeCol === tci ? '#217346' : '#555', fontWeight: activeCol === tci ? 700 : 600, cursor: 'pointer' }}>
                   {label}
                 </th>
               );
@@ -157,59 +159,44 @@ export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelectio
 
         <tbody>
           {rows.map((r, ri) => {
-            const [cellB, cellC, cellD, cellE] = r.cells;
             const h = r.height ?? 20;
-
+            const content: { tci: number; cell: Cell }[] = [
+              { tci: 2, cell: r.b },
+              { tci: 3, cell: r.c },
+              { tci: 4, cell: r.d },
+              { tci: 5, cell: r.e },
+            ];
             return (
               <tr key={ri} style={{ height: h }}>
-                <td style={{ ...rowNumStyle, background: rnBg(ri), color: hlRow === ri || (sel?.type === 'cell' && sel.ri === ri) ? '#217346' : '#555', fontWeight: hlRow === ri ? 700 : 400 }}
-                  onClick={(ev) => onRowNumClick(ri, ev)}>
+                <td onClick={(ev) => onRowNumClick(ri, ev)}
+                  style={{ ...rowNumStyle, background: rnBg(ri), color: activeRow === ri ? '#217346' : '#555', fontWeight: sel?.type === 'row' && sel.ri === ri ? 700 : 400 }}>
                   {ri + 1}
                 </td>
-
-                {/* A filler */}
-                <td style={{ ...bodyCell(h, bodyBg(1)), cursor: 'cell' }} onClick={(ev) => onCellClick(ri, 1, ev)} />
-
-                {r.spanAll ? (
-                  <td colSpan={4} style={{
-                    ...bodyCell(h, cellB.bg ?? '#fff'),
-                    fontWeight: cellB.bold ? 700 : 400,
-                    color: cellB.color ?? '#212121',
-                    fontStyle: cellB.italic ? 'italic' : 'normal',
-                    paddingLeft: 8,
-                    whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
-                    outline: isCellSel(ri, 2) ? '2px solid #217346' : undefined,
-                    outlineOffset: '-2px', position: 'relative', zIndex: isCellSel(ri, 2) ? 2 : undefined,
-                  }} onClick={(ev) => onCellClick(ri, 2, ev)}>
-                    {cellB.value}
+                <td onClick={(ev) => onCellClick(ri, 1, ev)}
+                  style={{ ...td(h, bg(ri, 1)), cursor: 'cell' }} />
+                {content.map(({ tci, cell }) => (
+                  <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev, cell.link)}
+                    style={{
+                      ...td(h, bg(ri, tci, cell.bg)),
+                      ...outline(ri, tci),
+                      fontWeight: cell.bold ? 700 : 400,
+                      color: cell.color ?? '#212121',
+                      fontStyle: cell.italic ? 'italic' : 'normal',
+                      textDecoration: cell.link ? 'underline' : undefined,
+                      cursor: cell.link ? 'pointer' : 'cell',
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
+                      lineHeight: '1.35',
+                      verticalAlign: 'middle',
+                      overflow: 'hidden',
+                    }}>
+                    {cell.value}
                   </td>
-                ) : (
-                  <>
-                    {([cellB, cellC, cellD, cellE] as Cell[]).map((cell, ci) => {
-                      const tci = CONTENT_TCIS[ci];
-                      return (
-                        <td key={tci} style={{
-                          ...bodyCell(h, bodyBg(tci, cell.bg)),
-                          fontWeight: cell.bold ? 700 : 400,
-                          color: cell.color ?? '#212121',
-                          fontStyle: cell.italic ? 'italic' : 'normal',
-                          textDecoration: cell.link ? 'underline' : undefined,
-                          cursor: cell.link ? 'pointer' : 'cell',
-                          whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
-                          outline: isCellSel(ri, tci) ? '2px solid #217346' : undefined,
-                          outlineOffset: '-2px', position: 'relative', zIndex: isCellSel(ri, tci) ? 2 : undefined,
-                        }} onClick={(ev) => onCellClick(ri, tci, ev, cell.link)}>
-                          {cell.value}
-                        </td>
-                      );
-                    })}
-                  </>
-                )}
-
-                {/* F G H filler */}
-                <td style={{ ...bodyCell(h, bodyBg(6)), cursor: 'cell' }} onClick={(ev) => onCellClick(ri, 6, ev)} />
-                <td style={{ ...bodyCell(h, bodyBg(7)), cursor: 'cell' }} onClick={(ev) => onCellClick(ri, 7, ev)} />
-                <td style={{ ...bodyCell(h, bodyBg(8)), cursor: 'cell' }} onClick={(ev) => onCellClick(ri, 8, ev)} />
+                ))}
+                {[6, 7, 8].map(tci => (
+                  <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)}
+                    style={{ ...td(h, bg(ri, tci)), cursor: 'cell' }} />
+                ))}
               </tr>
             );
           })}
@@ -218,10 +205,17 @@ export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelectio
             const ri = rows.length + i;
             return (
               <tr key={`e${i}`} style={{ height: 20 }}>
-                <td style={{ ...rowNumStyle, color: '#aaa', background: rnBg(ri) }} onClick={(ev) => onRowNumClick(ri, ev)}>{ri + 1}</td>
-                {Array.from({ length: 8 }).map((_, ci) => (
-                  <td key={ci} style={{ ...bodyCell(20, bodyBg(ci + 1)), cursor: 'cell' }} onClick={(ev) => onCellClick(ri, ci + 1, ev)} />
-                ))}
+                <td onClick={(ev) => onRowNumClick(ri, ev)}
+                  style={{ ...rowNumStyle, background: rnBg(ri), color: activeRow === ri ? '#217346' : '#aaa', fontWeight: sel?.type === 'row' && sel.ri === ri ? 700 : 400 }}>
+                  {ri + 1}
+                </td>
+                {Array.from({ length: 8 }).map((_, ci) => {
+                  const tci = ci + 1;
+                  return (
+                    <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)}
+                      style={{ ...td(20, bg(ri, tci)), cursor: 'cell' }} />
+                  );
+                })}
               </tr>
             );
           })}
@@ -253,13 +247,12 @@ const rowNumStyle: React.CSSProperties = {
   fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
 };
 
-function bodyCell(height: number, bg: string): React.CSSProperties {
+function td(height: number, bg: string): React.CSSProperties {
   return {
     height, background: bg,
     border: BORDER, borderLeft: 'none', borderTop: 'none',
     fontSize: 12, padding: '2px 8px',
-    cursor: 'cell', userSelect: 'none',
+    userSelect: 'none',
     fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
-    overflow: 'hidden',
   };
 }
