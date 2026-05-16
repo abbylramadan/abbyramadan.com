@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 
-const COL_WIDTHS = [40, 50, 240, 180, 200, 160, 120];
-const COL_LABELS = ['', 'A', 'B', 'C', 'D', 'E', 'F'];
+const COLS = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+const COL_WIDTHS = [36, 30, 200, 320, 180, 120, 60, 60, 60];
 
 type Cell = {
   value: string;
@@ -12,112 +12,244 @@ type Cell = {
   bg?: string;
   italic?: boolean;
   link?: string;
+  align?: 'left' | 'center' | 'right';
 };
 
-function hdr(value: string): Cell { return { value, bold: true, color: '#fff', bg: '#217346' }; }
-function sub(value: string): Cell { return { value, bold: true, color: '#fff', bg: '#107c41' }; }
-function tag(value: string): Cell { return { value, color: '#217346', bg: '#e9f5ee' }; }
-function meta(value: string): Cell { return { value, italic: true, color: '#555' }; }
-function lnk(value: string, link: string): Cell { return { value, color: '#0563c1', link }; }
-function e(bg?: string): Cell { return { value: '', bg }; }
+const G = '#217346';
+const LG = '#e9f5ee';
+const MG = '#107c41';
+const W = '#ffffff';
 
-const rows: [number, Cell, Cell, Cell, Cell, Cell, Cell][] = [
-  [1, hdr('PROJECTS'), e('#217346'), e('#217346'), e('#217346'), e('#217346'), e('#217346')],
-  [2, e(), e(), e(), e(), e(), e()],
-  [3, sub('#'), sub('Project'), sub('Description'), sub('Technologies'), sub('Link'), sub('Status')],
-  [4, e('#e9f5ee'), { value: 'Home Affordability Calculator', bold: true, bg: '#e9f5ee', color: '#1a1a1a' }, { value: 'Helps users understand how much home they can afford with mortgage calculations, interactive visualizations, and personalized analysis.', bg: '#e9f5ee', color: '#333' }, tag('React · TypeScript · Chart.js · Tailwind'), lnk('mortgagecalc.abbyramadan.com', 'https://mortgagecalc.abbyramadan.com'), { value: '✅ Live', color: '#217346', bold: true }],
-  [5, e(), e(), e(), e(), e(), e()],
-  [6, e(), e(), meta('More projects coming soon...'), e(), e(), e()],
-  [7, e(), e(), e(), e(), e(), e()],
-  [8, hdr('TOOLS & SKILLS'), e('#217346'), e('#217346'), e('#217346'), e('#217346'), e('#217346')],
-  [9, e(), e(), e(), e(), e(), e()],
-  [10, sub('Tool'), sub('Proficiency'), sub('Years'), sub('Notes'), e('#107c41'), e('#107c41')],
-  [11, { value: 'Excel', bold: true, bg: '#e9f5ee', color: '#217346' }, { value: '████████░░  Advanced', bg: '#e9f5ee', color: '#217346' }, { value: '7+', bg: '#e9f5ee', color: '#333' }, { value: 'Pivot tables, VBA, financial modeling', bg: '#e9f5ee', color: '#555' }, e('#e9f5ee'), e('#e9f5ee')],
-  [12, { value: 'Python', bold: true, bg: '#f7fbf9', color: '#217346' }, { value: '██████░░░░  Intermediate', bg: '#f7fbf9', color: '#217346' }, { value: '3+', bg: '#f7fbf9', color: '#333' }, { value: 'pandas, data analysis, automation', bg: '#f7fbf9', color: '#555' }, e('#f7fbf9'), e('#f7fbf9')],
-  [13, { value: 'R', bold: true, bg: '#e9f5ee', color: '#217346' }, { value: '██████░░░░  Intermediate', bg: '#e9f5ee', color: '#217346' }, { value: '3+', bg: '#e9f5ee', color: '#333' }, { value: 'Statistical analysis, ggplot2, tidyverse', bg: '#e9f5ee', color: '#555' }, e('#e9f5ee'), e('#e9f5ee')],
-  [14, { value: 'SQL', bold: true, bg: '#f7fbf9', color: '#217346' }, { value: '███████░░░  Advanced', bg: '#f7fbf9', color: '#217346' }, { value: '4+', bg: '#f7fbf9', color: '#333' }, { value: 'Queries, reporting, optimization', bg: '#f7fbf9', color: '#555' }, e('#f7fbf9'), e('#f7fbf9')],
-  [15, { value: 'Tableau', bold: true, bg: '#e9f5ee', color: '#217346' }, { value: '█████░░░░░  Intermediate', bg: '#e9f5ee', color: '#217346' }, { value: '2+', bg: '#e9f5ee', color: '#333' }, { value: 'Dashboards, data visualization', bg: '#e9f5ee', color: '#555' }, e('#e9f5ee'), e('#e9f5ee')],
-  [16, { value: 'PowerBI', bold: true, bg: '#f7fbf9', color: '#217346' }, { value: '█████░░░░░  Intermediate', bg: '#f7fbf9', color: '#217346' }, { value: '2+', bg: '#f7fbf9', color: '#333' }, { value: 'Business intelligence, reporting', bg: '#f7fbf9', color: '#555' }, e('#f7fbf9'), e('#f7fbf9')],
-  [17, e(), e(), e(), e(), e(), e()],
+function e(): Cell { return { value: '' }; }
+function hdr(v: string): Cell { return { value: v, bold: true, bg: G, color: W }; }
+function sect(v: string): Cell { return { value: v, bold: true, bg: MG, color: W }; }
+function lbl(v: string): Cell { return { value: v, bold: true, color: '#1a1a1a' }; }
+function meta(v: string): Cell { return { value: v, italic: true, color: '#555' }; }
+function plain(v: string): Cell { return { value: v, color: '#222' }; }
+function tag(v: string): Cell { return { value: v, color: '#217346', bg: LG }; }
+function lnk(v: string, href: string): Cell { return { value: v, color: '#0563c1', link: href }; }
+function right(v: string): Cell { return { value: v, color: '#555', align: 'right' }; }
+
+type Row = {
+  cells: [Cell, Cell, Cell, Cell, Cell];
+  height?: number;
+};
+
+function row(b: Cell, c: Cell, d: Cell, e: Cell, f: Cell, height?: number): Row {
+  return { cells: [b, c, d, e, f], height };
+}
+
+const rows: Row[] = [
+  row(e(), hdr('PROJECTS'), e(), e(), e()),
+  row(e(), e(), e(), e(), e(), 6),
+
+  // Column headers for projects table
+  row(e(), sect('Project'), sect('Description'), sect('Technologies'), sect('Status')),
+  // Project row
+  row(
+    e(),
+    lnk('Home Affordability Calculator', 'https://mortgagecalc.abbyramadan.com'),
+    plain('Comprehensive tool for understanding home affordability. Features mortgage calculations, interactive visualizations, and personalized analysis based on income, debts, and financial goals.'),
+    tag('React · TypeScript · Chart.js · Tailwind CSS'),
+    { value: '✅ Live', color: G, bold: true },
+    42
+  ),
+  row(e(), e(), e(), e(), e(), 6),
+  row(e(), meta('More projects coming soon...'), e(), e(), e()),
+  row(e(), e(), e(), e(), e(), 14),
+
+  // Skills section
+  row(e(), hdr('SKILLS'), e(), e(), e()),
+  row(e(), e(), e(), e(), e(), 6),
+  row(e(), sect('Skill'), sect('Category'), sect('Proficiency'), e()),
+  row(e(), lbl('Excel'), plain('Finance / Reporting'), { value: '★★★★★  Advanced', color: G, bold: true }, e()),
+  row(e(), lbl('SQL'), plain('Data / Reporting'), { value: '★★★★☆  Advanced', color: G, bold: true }, e()),
+  row(e(), lbl('Python'), plain('Analytics'), { value: '★★★☆☆  Intermediate', color: '#555' }, e()),
+  row(e(), lbl('R'), plain('Analytics'), { value: '★★★☆☆  Intermediate', color: '#555' }, e()),
+  row(e(), lbl('Tableau'), plain('Visualization'), { value: '★★★☆☆  Intermediate', color: '#555' }, e()),
+  row(e(), lbl('PowerBI'), plain('Visualization'), { value: '★★★☆☆  Intermediate', color: '#555' }, e()),
+  row(e(), lbl('Power Automate'), plain('Automation'), { value: '★★★☆☆  Intermediate', color: '#555' }, e()),
+  row(e(), lbl('Forecasting'), plain('Finance'), { value: '★★★★☆  Advanced', color: G, bold: true }, e()),
+  row(e(), lbl('Structured Finance'), plain('Finance'), { value: '★★★★☆  Advanced', color: G, bold: true }, e()),
+  row(e(), e(), e(), e(), e(), 20),
 ];
 
 export default function ProjectsSheet() {
-  const [selectedRow, setSelectedRow] = useState<number | null>(null);
+  const [selectedRowIdx, setSelectedRowIdx] = useState<number | null>(null);
 
   return (
-    <div className="h-full overflow-auto bg-white">
-      <table className="border-collapse" style={{ tableLayout: 'fixed', width: '100%', minWidth: 900 }}>
+    <div className="h-full overflow-auto" style={{ background: '#fff' }}>
+      <table
+        className="border-collapse"
+        style={{ tableLayout: 'fixed', width: '100%', minWidth: 860, borderSpacing: 0 }}
+      >
         <colgroup>
-          <col style={{ width: 40 }} />
-          {COL_WIDTHS.slice(1).map((w, i) => (
-            <col key={i} style={{ width: w }} />
-          ))}
+          <col style={{ width: 36 }} />
+          <col style={{ width: 30 }} />
+          <col style={{ width: 200 }} />
+          <col style={{ width: 320 }} />
+          <col style={{ width: 180 }} />
+          <col style={{ width: 120 }} />
+          <col style={{ width: 60 }} />
+          <col style={{ width: 60 }} />
+          <col style={{ width: 60 }} />
         </colgroup>
+
         <thead>
           <tr>
-            <th className="xl-cell-header sticky top-0 z-10" style={{ width: 40, height: 22 }} />
-            {COL_LABELS.slice(1).map((label, i) => (
-              <th
-                key={i}
-                className="xl-cell-header sticky top-0 z-10"
-                style={{ width: COL_WIDTHS[i + 1], height: 22 }}
-              >
+            <th style={thStyle(36)} />
+            {COLS.slice(1).map((label, i) => (
+              <th key={i} style={thStyle(COL_WIDTHS[i + 1])}>
                 {label}
               </th>
             ))}
           </tr>
         </thead>
+
         <tbody>
-          {rows.map(([rowNum, a, b, c, d, e2, f]) => {
-            const cells = [a, b, c, d, e2, f];
-            const isSelected = selectedRow === rowNum;
+          {rows.map((r, ri) => {
+            const [cellB, cellC, cellD, cellE, cellF] = r.cells;
+            const h = r.height ?? 20;
+            const isSelected = selectedRowIdx === ri;
+            const cSpansAll = (cellD.value === '' && cellE.value === '' && cellF.value === '');
+
             return (
-              <tr
-                key={rowNum}
-                style={{ height: 22 }}
-                onClick={() => setSelectedRow(rowNum)}
-              >
-                <td
-                  className="xl-cell-header"
-                  style={{
-                    width: 40,
-                    textAlign: 'center',
-                    fontSize: 11,
-                    background: isSelected ? '#bdd7ee' : undefined,
-                    fontWeight: isSelected ? 700 : undefined,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {rowNum}
+              <tr key={ri} style={{ height: h }} onClick={() => setSelectedRowIdx(ri)}>
+                <td style={{
+                  ...rowNumStyle,
+                  background: isSelected ? '#bdd7ee' : '#f0f0f0',
+                  fontWeight: isSelected ? 700 : 400,
+                }}>
+                  {ri + 1}
                 </td>
-                {cells.map((cell, ci) => (
+                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
+
+                {cSpansAll ? (
                   <td
-                    key={ci}
-                    className="xl-cell"
+                    colSpan={4}
                     style={{
-                      width: COL_WIDTHS[ci + 1],
-                      fontWeight: cell.bold ? 700 : 400,
-                      color: isSelected ? (cell.bg ? cell.color : '#1565c0') : (cell.color ?? '#212121'),
-                      background: isSelected
-                        ? (cell.bg ? cell.bg : '#e8f0fe')
-                        : (cell.bg ?? 'transparent'),
-                      fontStyle: cell.italic ? 'italic' : 'normal',
-                      fontSize: 12,
-                      padding: '1px 6px',
-                      cursor: cell.link ? 'pointer' : 'cell',
-                      userSelect: 'none',
-                      textDecoration: cell.link ? 'underline' : undefined,
+                      ...contentCell(h),
+                      fontWeight: cellC.bold ? 700 : 400,
+                      color: cellC.color ?? '#212121',
+                      background: isSelected ? (cellC.bg ?? '#e8f0fe') : (cellC.bg ?? '#fff'),
+                      fontStyle: cellC.italic ? 'italic' : 'normal',
+                      textDecoration: cellC.link ? 'underline' : undefined,
+                      cursor: cellC.link ? 'pointer' : 'cell',
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
+                      lineHeight: '1.35',
+                      verticalAlign: 'middle',
                     }}
-                    onClick={cell.link ? (ev) => { ev.stopPropagation(); window.open(cell.link, '_blank'); } : undefined}
+                    onClick={cellC.link ? (ev) => { ev.stopPropagation(); window.open(cellC.link, '_blank'); } : undefined}
                   >
-                    {cell.value}
+                    {cellC.value}
                   </td>
-                ))}
+                ) : (
+                  <>
+                    {[cellC, cellD, cellE, cellF].map((cell, ci) => (
+                      <td
+                        key={ci}
+                        style={{
+                          ...contentCell(h),
+                          fontWeight: cell.bold ? 700 : 400,
+                          color: isSelected ? (cell.bg ? cell.color : '#1565c0') : (cell.color ?? '#212121'),
+                          background: isSelected ? (cell.bg ?? '#e8f0fe') : (cell.bg ?? '#fff'),
+                          fontStyle: cell.italic ? 'italic' : 'normal',
+                          textAlign: cell.align ?? 'left',
+                          textDecoration: cell.link ? 'underline' : undefined,
+                          cursor: cell.link ? 'pointer' : 'cell',
+                          whiteSpace: 'normal',
+                          wordBreak: 'break-word',
+                          lineHeight: '1.35',
+                          verticalAlign: 'middle',
+                        }}
+                        onClick={cell.link ? (ev) => { ev.stopPropagation(); window.open(cell.link, '_blank'); } : undefined}
+                      >
+                        {cell.value}
+                      </td>
+                    ))}
+                  </>
+                )}
+
+                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
+                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
+                <td style={gridCell(h, isSelected ? '#e8f0fe' : '#fff')} />
               </tr>
             );
           })}
+
+          {Array.from({ length: 20 }).map((_, i) => (
+            <tr key={`empty-${i}`} style={{ height: 20 }}>
+              <td style={{ ...rowNumStyle, color: '#aaa' }}>{rows.length + i + 1}</td>
+              {Array.from({ length: 8 }).map((_, ci) => (
+                <td key={ci} style={gridCell(20, '#fff')} />
+              ))}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
   );
+}
+
+const BORDER = '1px solid #d0d7de';
+
+function thStyle(width: number): React.CSSProperties {
+  return {
+    width,
+    height: 22,
+    background: '#f0f0f0',
+    border: BORDER,
+    borderTop: 'none',
+    borderLeft: 'none',
+    fontSize: 11,
+    fontWeight: 600,
+    color: '#666',
+    textAlign: 'center',
+    padding: 0,
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+    fontFamily: "'Calibri', 'Segoe UI', Arial, sans-serif",
+  };
+}
+
+const rowNumStyle: React.CSSProperties = {
+  width: 36,
+  background: '#f0f0f0',
+  border: BORDER,
+  borderLeft: 'none',
+  fontSize: 11,
+  color: '#666',
+  textAlign: 'center',
+  padding: 0,
+  userSelect: 'none',
+  cursor: 'pointer',
+  fontFamily: "'Calibri', 'Segoe UI', Arial, sans-serif",
+};
+
+function gridCell(height: number, bg: string): React.CSSProperties {
+  return {
+    height,
+    background: bg,
+    border: BORDER,
+    borderLeft: 'none',
+    borderTop: 'none',
+    padding: 0,
+  };
+}
+
+function contentCell(height: number): React.CSSProperties {
+  return {
+    height,
+    border: BORDER,
+    borderLeft: 'none',
+    borderTop: 'none',
+    fontSize: 12,
+    padding: '2px 8px',
+    cursor: 'cell',
+    userSelect: 'none',
+    fontFamily: "'Calibri', 'Segoe UI', Arial, sans-serif",
+    overflow: 'hidden',
+  };
 }

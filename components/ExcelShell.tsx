@@ -3,10 +3,8 @@
 import { useState } from 'react';
 import ResumeSheet from './sheets/ResumeSheet';
 import ProjectsSheet from './sheets/ProjectsSheet';
-import AboutSheet from './sheets/AboutSheet';
 
 const tabs = [
-  { id: 'about', label: 'About' },
   { id: 'resume', label: 'Resume' },
   { id: 'projects', label: 'Projects' },
 ];
@@ -102,18 +100,16 @@ const ribbonGroups = {
 type RibbonTab = 'home' | 'insert';
 
 export default function ExcelShell() {
-  const [activeSheet, setActiveSheet] = useState<string>('about');
+  const [activeSheet, setActiveSheet] = useState<string>('resume');
   const [activeRibbon, setActiveRibbon] = useState<RibbonTab>('home');
 
   const formulaValues: Record<string, string> = {
-    about: '=CONCAT(A1," | Capital Markets Associate | Chicago, IL")',
     resume: '=VLOOKUP("experience",WorkHistory!A:D,4,FALSE)',
     projects: '=HYPERLINK("https://mortgagecalc.abbyramadan.com","Home Affordability Calculator")',
   };
 
   const cellRefValues: Record<string, string> = {
-    about: 'A1',
-    resume: 'B3',
+    resume: 'C3',
     projects: 'C2',
   };
 
@@ -202,7 +198,6 @@ export default function ExcelShell() {
 
       {/* Main content area */}
       <div className="flex-1 overflow-hidden">
-        {activeSheet === 'about' && <AboutSheet />}
         {activeSheet === 'resume' && <ResumeSheet />}
         {activeSheet === 'projects' && <ProjectsSheet />}
       </div>
