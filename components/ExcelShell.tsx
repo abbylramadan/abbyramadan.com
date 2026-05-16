@@ -99,21 +99,29 @@ const ribbonGroups = {
 
 type RibbonTab = 'home' | 'insert';
 
+export type CellSelection = {
+  ref: string;    // e.g. "C4"
+  formula: string; // e.g. '=XLOOKUP(...)'
+};
+
 export default function ExcelShell() {
   const [activeSheet, setActiveSheet] = useState<string>('resume');
   const [activeRibbon, setActiveRibbon] = useState<RibbonTab>('home');
-
-  const formulaValues: Record<string, string> = {
-    resume: '=VLOOKUP("experience",WorkHistory!A:D,4,FALSE)',
-    projects: '=HYPERLINK("https://mortgagecalc.abbyramadan.com","Home Affordability Calculator")',
-  };
-
-  const cellRefValues: Record<string, string> = {
-    resume: 'C3',
-    projects: 'C2',
-  };
+  const [selection, setSelection] = useState<CellSelection>({
+    ref: 'C1',
+    formula: '="Abby Ramadan"',
+  });
 
   const groups = ribbonGroups[activeRibbon] ?? ribbonGroups.home;
+
+  function handleSheetChange(id: string) {
+    setActiveSheet(id);
+    if (id === 'resume') {
+      setSelection({ ref: 'C1', formula: '="Abby Ramadan"' });
+    } else {
+      setSelection({ ref: 'C1', formula: '="Projects"' });
+    }
+  }
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#f3f3f3]" style={{ fontFamily: "'Calibri', 'Segoe UI', Arial, sans-serif" }}>
@@ -187,30 +195,29 @@ export default function ExcelShell() {
       {/* Formula bar */}
       <div className="flex items-center bg-white border-b border-[#c0c0c0] px-2 h-7 shrink-0 gap-1">
         <div className="flex items-center justify-center w-16 h-5 border border-[#c0c0c0] text-xs text-[#333] font-mono px-2 shrink-0 bg-white">
-          {cellRefValues[activeSheet]}
+          {selection.ref}
         </div>
         <div className="w-px h-5 bg-[#c0c0c0] shrink-0" />
         <span className="text-[#217346] font-bold text-base leading-none px-1 shrink-0">fx</span>
         <div className="flex-1 h-5 border border-[#c0c0c0] text-xs font-mono px-2 flex items-center bg-white text-[#0563c1] overflow-hidden">
-          <span className="truncate">{formulaValues[activeSheet]}</span>
+          <span className="truncate">{selection.formula}</span>
         </div>
       </div>
 
       {/* Main content area */}
       <div className="flex-1 overflow-hidden">
-        {activeSheet === 'resume' && <ResumeSheet />}
-        {activeSheet === 'projects' && <ProjectsSheet />}
+        {activeSheet === 'resume' && <ResumeSheet onSelect={setSelection} />}
+        {activeSheet === 'projects' && <ProjectsSheet onSelect={setSelection} />}
       </div>
 
       {/* Sheet tabs + status bar */}
       <div className="shrink-0 bg-[#f3f3f3] border-t border-[#d1d1d1]">
-        {/* Sheet tab strip */}
         <div className="flex items-end px-2 pt-1 gap-0.5">
           <button className="w-5 h-5 flex items-center justify-center text-[#888] hover:text-[#333] text-lg leading-none" title="Add sheet">+</button>
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveSheet(tab.id)}
+              onClick={() => handleSheetChange(tab.id)}
               className={`xl-sheet-tab ${activeSheet === tab.id ? 'active' : ''}`}
             >
               {tab.label}
