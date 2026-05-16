@@ -195,8 +195,11 @@ function selBoxShadow(
   return undefined;
 }
 
-// isBulletRow: bullets span B(tci=2)–D(tci=4) with colSpan=3
 function isBullet(r: Row) { return r.b.value.startsWith('•') && r.c.value === '' && r.d.value === '' && r.e.value === ''; }
+// Rows where B text should overflow into C/D visually with no internal vertical borders
+function isSpanning(r: Row) {
+  return isBullet(r) || (r.c.value === '' && r.d.value === '' && r.e.value === '' && r.b.value !== '');
+}
 
 export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection) => void }) {
   const [sel, setSel] = useState<Sel>(null);
@@ -267,7 +270,7 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
         <tbody>
           {rows.map((r, ri) => {
             const h = r.height ?? 20;
-            const bullet = isBullet(r);
+            const spanning = isSpanning(r);
             const isRowSel = sel?.type === 'row' && sel.ri === ri;
 
             return (
@@ -279,84 +282,74 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
                   color: activeRow === ri ? SEL : '#555',
                   fontWeight: isRowSel ? 700 : 400,
                   boxShadow: isRowSel ? `inset 2px 0 0 0 ${SEL}, inset 0 2px 0 0 ${SEL}, inset 0 -2px 0 0 ${SEL}` : undefined,
+                  position: isRowSel ? 'relative' : undefined,
+                  zIndex: isRowSel ? 2 : undefined,
                 }}>
                   {ri + 1}
                 </td>
 
                 {/* A filler */}
-                <td onClick={(ev) => onCellClick(ri, 1, ev)} style={{
-                  ...td(h, cellBg(ri, 1)),
-                  cursor: 'cell',
-                  boxShadow: selBoxShadow(sel, ri, 1, TOTAL, FIRST_COL, LAST_COL),
-                }} />
+                {(() => { const s = selBoxShadow(sel, ri, 1, TOTAL, FIRST_COL, LAST_COL); return (
+                  <td onClick={(ev) => onCellClick(ri, 1, ev)} style={{
+                    ...td(h, cellBg(ri, 1)),
+                    cursor: 'cell',
+                    boxShadow: s,
+                    position: s ? 'relative' : undefined,
+                    zIndex: s ? 2 : undefined,
+                  }} />
+                ); })()}
 
-                {bullet ? (
-                  // Bullet row: no colSpan — B has overflow:visible so text spills into C/D visually,
-                  // but each cell is its own td so column highlighting works correctly per-column.
-                  <>
-                    {([
-                      { tci: 2, c: r.b },
-                      { tci: 3, c: r.c },
-                      { tci: 4, c: r.d },
-                      { tci: 5, c: r.e },
-                    ] as { tci: number; c: Cell }[]).map(({ tci, c }) => (
-                      <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
-                        ...td(h, cellBg(ri, tci, c.bg)),
-                        fontWeight: 400,
-                        color: c.color ?? '#222',
-                        fontStyle: 'normal',
-                        // B overflows into C/D visually; C/D are transparent so B text shows through
-                        overflow: tci === 2 ? 'visible' : 'hidden',
-                        whiteSpace: tci === 2 ? 'nowrap' : 'normal',
-                        // C and D: transparent bg unless highlighted, no left border so text flows
-                        background: (tci === 3 || tci === 4)
-                          ? cellBg(ri, tci, 'transparent')
-                          : cellBg(ri, tci, c.bg),
-                        // Hide the vertical dividers between B, C, D so text bleeds cleanly
-                        borderLeft: (tci === 3 || tci === 4) ? 'none' : undefined,
-                        borderRight: (tci === 2 || tci === 3) ? 'none' : undefined,
-                        lineHeight: '1.35', verticalAlign: 'middle',
-                        cursor: 'cell',
-                        boxShadow: selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL),
-                      }}>
-                        {c.value}
-                      </td>
-                    ))}
-                  </>
-                ) : (
-                  // All other rows: individual B C D E cells
-                  <>
-                    {([
-                      { tci: 2, c: r.b },
-                      { tci: 3, c: r.c },
-                      { tci: 4, c: r.d },
-                      { tci: 5, c: r.e },
-                    ] as { tci: number; c: Cell }[]).map(({ tci, c }) => (
-                      <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
-                        ...td(h, cellBg(ri, tci, c.bg)),
-                        fontWeight: c.bold ? 700 : 400,
-                        color: c.color ?? '#212121',
-                        fontStyle: c.italic ? 'italic' : 'normal',
-                        textAlign: c.align ?? 'left',
-                        paddingLeft: tci === 2 ? 8 + (c.indent ?? 0) * 16 : 8,
-                        whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
-                        cursor: 'cell', overflow: 'hidden',
-                        boxShadow: selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL),
-                      }}>
-                        {c.value}
-                      </td>
-                    ))}
-                  </>
-                )}
+                {([
+                  { tci: 2, c: r.b },
+                  { tci: 3, c: r.c },
+                  { tci: 4, c: r.d },
+                  { tci: 5, c: r.e },
+                ] as { tci: number; c: Cell }[]).map(({ tci, c }) => {
+                  const shadow = selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL);
+                  // Spanning rows: B overflows, C/D transparent + no internal borders
+                  const isBleedThrough = spanning && (tci === 3 || tci === 4);
+                  // For bleed-through cells: use actual bg (so colored rows stay colored) unless it's white/undefined
+                  const bleedBg = c.bg && c.bg !== '#fff' ? c.bg : 'transparent';
+                  const bg = isBleedThrough ? cellBg(ri, tci, bleedBg) : cellBg(ri, tci, c.bg);
+                  return (
+                    <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
+                      ...td(h, bg),
+                      fontWeight: c.bold ? 700 : 400,
+                      color: c.color ?? '#212121',
+                      fontStyle: c.italic ? 'italic' : 'normal',
+                      textAlign: c.align ?? 'left',
+                      paddingLeft: tci === 2 ? 8 + (c.indent ?? 0) * 16 : 8,
+                      lineHeight: '1.35', verticalAlign: 'middle',
+                      cursor: 'cell',
+                      // Spanning: B overflows, C/D hide internal borders
+                      overflow: (spanning && tci === 2) ? 'visible' : 'hidden',
+                      whiteSpace: (spanning && tci === 2) ? 'nowrap' : 'normal',
+                      wordBreak: spanning ? undefined : 'break-word',
+                      borderLeft: isBleedThrough ? 'none' : undefined,
+                      borderRight: (spanning && (tci === 2 || tci === 3)) ? 'none' : undefined,
+                      // zIndex so box-shadow paints above adjacent cell borders
+                      boxShadow: shadow,
+                      position: shadow ? 'relative' : undefined,
+                      zIndex: shadow ? 2 : undefined,
+                    }}>
+                      {c.value}
+                    </td>
+                  );
+                })}
 
                 {/* F G H filler */}
-                {[6, 7, 8].map(tci => (
-                  <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
-                    ...td(h, cellBg(ri, tci)),
-                    cursor: 'cell',
-                    boxShadow: selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL),
-                  }} />
-                ))}
+                {[6, 7, 8].map(tci => {
+                  const s = selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL);
+                  return (
+                    <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
+                      ...td(h, cellBg(ri, tci)),
+                      cursor: 'cell',
+                      boxShadow: s,
+                      position: s ? 'relative' : undefined,
+                      zIndex: s ? 2 : undefined,
+                    }} />
+                  );
+                })}
               </tr>
             );
           })}
