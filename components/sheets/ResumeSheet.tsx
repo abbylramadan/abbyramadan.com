@@ -312,7 +312,9 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
                         background: (tci === 3 || tci === 4)
                           ? cellBg(ri, tci, 'transparent')
                           : cellBg(ri, tci, c.bg),
+                        // Hide the vertical dividers between B, C, D so text bleeds cleanly
                         borderLeft: (tci === 3 || tci === 4) ? 'none' : undefined,
+                        borderRight: (tci === 2 || tci === 3) ? 'none' : undefined,
                         lineHeight: '1.35', verticalAlign: 'middle',
                         cursor: 'cell',
                         boxShadow: selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL),
