@@ -143,15 +143,15 @@ export default function ExcelShell() {
       </div>
 
       {/* Ribbon tab bar */}
-      <div className="flex items-end bg-[#217346] px-2 pt-0 shrink-0">
+      <div className="flex items-end bg-[#217346] px-3 shrink-0">
         {(['home', 'insert'] as RibbonTab[]).map(rt => (
           <button
             key={rt}
             onClick={() => setActiveRibbon(rt)}
-            className={`px-4 py-1.5 text-xs font-medium rounded-t capitalize transition-colors select-none ${
+            className={`px-5 py-2 text-[12px] font-medium rounded-t-sm transition-colors select-none ${
               activeRibbon === rt
-                ? 'bg-[#f3f3f3] text-[#217346]'
-                : 'text-white hover:bg-white/20'
+                ? 'bg-white text-[#217346] shadow-sm'
+                : 'text-white/90 hover:bg-white/15'
             }`}
           >
             {rt.charAt(0).toUpperCase() + rt.slice(1)}
@@ -160,7 +160,7 @@ export default function ExcelShell() {
         {(['Page Layout', 'Formulas', 'Data', 'Review', 'View'] as string[]).map(rt => (
           <button
             key={rt}
-            className="px-4 py-1.5 text-xs font-medium rounded-t capitalize transition-colors text-white hover:bg-white/20 select-none"
+            className="px-5 py-2 text-[12px] font-medium rounded-t-sm text-white/90 hover:bg-white/15 select-none transition-colors"
           >
             {rt}
           </button>
@@ -168,26 +168,35 @@ export default function ExcelShell() {
       </div>
 
       {/* Ribbon content */}
-      <div className="flex items-end bg-[#f3f3f3] border-b border-[#d1d1d1] px-2 pt-1 shrink-0 overflow-x-auto">
+      <div className="flex items-stretch bg-white border-b-2 border-[#217346] px-2 shrink-0 overflow-x-auto" style={{ minHeight: 72 }}>
         {groups.map((group, gi) => (
-          <div key={gi} className="flex flex-col items-center mr-1">
-            <div className="flex items-end gap-0.5 pb-1">
-              {group.buttons.map((btn, bi) => (
-                <button
-                  key={bi}
-                  className="xl-ribbon-btn"
-                  title={btn.label}
-                >
-                  <span className={`text-lg leading-none ${(btn as { style?: string }).style ?? ''}`}>
-                    {btn.icon}
-                  </span>
-                  <span className="text-[10px] leading-none text-[#555]">{btn.label}</span>
-                </button>
-              ))}
+          <div key={gi} className="flex items-stretch">
+            {/* Group buttons */}
+            <div className="flex flex-col justify-between py-1 px-1">
+              <div className="flex items-end gap-px">
+                {group.buttons.map((btn, bi) => (
+                  <button
+                    key={bi}
+                    title={btn.label}
+                    style={{ fontFamily: "'Calibri', 'Segoe UI', Arial, sans-serif" }}
+                    className="flex flex-col items-center justify-center gap-1 px-2 py-1.5 min-w-[44px] rounded hover:bg-[#e8e8e8] active:bg-[#d8d8d8] border border-transparent hover:border-[#c8c8c8] transition-colors cursor-pointer"
+                  >
+                    <span className={`text-xl leading-none text-[#333] ${(btn as { style?: string }).style ?? ''}`}>
+                      {btn.icon}
+                    </span>
+                    <span className="text-[10px] leading-tight text-[#444] whitespace-nowrap">{btn.label}</span>
+                  </button>
+                ))}
+              </div>
+              {/* Group label */}
+              <div className="text-[10px] text-[#666] text-center border-t border-[#e0e0e0] pt-0.5 mt-0.5 px-1">
+                {group.label}
+              </div>
             </div>
-            <div className="text-[10px] text-[#888] border-t border-[#d1d1d1] w-full text-center pt-0.5 leading-none">
-              {group.label}
-            </div>
+            {/* Group divider */}
+            {gi < groups.length - 1 && (
+              <div className="w-px bg-[#e0e0e0] my-2 mx-1 self-stretch" />
+            )}
           </div>
         ))}
       </div>
