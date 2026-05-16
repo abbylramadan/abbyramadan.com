@@ -9,7 +9,7 @@ const tabs = [
   { id: 'projects', label: 'Projects' },
 ];
 
-const ribbonGroups = {
+const ribbonGroups: Record<string, { label: string; buttons: { icon: string; label: string; style?: string }[] }[]> = {
   home: [
     {
       label: 'Clipboard',
@@ -89,15 +89,284 @@ const ribbonGroups = {
       ],
     },
     {
+      label: 'Illustrations',
+      buttons: [
+        { icon: '🖼️', label: 'Pictures' },
+        { icon: '⬡', label: 'Shapes' },
+        { icon: '🔣', label: 'Icons' },
+      ],
+    },
+    {
       label: 'Links',
       buttons: [
         { icon: '🔗', label: 'Link' },
+        { icon: '🔖', label: 'Bookmark' },
+      ],
+    },
+    {
+      label: 'Text',
+      buttons: [
+        { icon: 'A', label: 'Text Box' },
+        { icon: '🔠', label: 'WordArt' },
+        { icon: '=', label: 'Equation' },
+        { icon: 'Ω', label: 'Symbol' },
+      ],
+    },
+    {
+      label: 'Sparklines',
+      buttons: [
+        { icon: '📉', label: 'Line' },
+        { icon: '█', label: 'Column' },
+        { icon: '±', label: 'Win/Loss' },
+      ],
+    },
+  ],
+  'Page Layout': [
+    {
+      label: 'Themes',
+      buttons: [
+        { icon: '🎨', label: 'Themes' },
+        { icon: '🖌️', label: 'Colors' },
+        { icon: 'Aa', label: 'Fonts' },
+        { icon: '✨', label: 'Effects' },
+      ],
+    },
+    {
+      label: 'Page Setup',
+      buttons: [
+        { icon: '📄', label: 'Margins' },
+        { icon: '↔️', label: 'Orientation' },
+        { icon: '📐', label: 'Size' },
+        { icon: '⬜', label: 'Print Area' },
+        { icon: '—', label: 'Breaks' },
+        { icon: '🖼️', label: 'Background' },
+        { icon: '🖨️', label: 'Print Titles' },
+      ],
+    },
+    {
+      label: 'Scale to Fit',
+      buttons: [
+        { icon: '↕', label: 'Width' },
+        { icon: '↔', label: 'Height' },
+        { icon: '%', label: 'Scale' },
+      ],
+    },
+    {
+      label: 'Sheet Options',
+      buttons: [
+        { icon: '#', label: 'Gridlines' },
+        { icon: '1', label: 'Headings' },
+      ],
+    },
+    {
+      label: 'Arrange',
+      buttons: [
+        { icon: '⬆', label: 'Bring Fwd' },
+        { icon: '⬇', label: 'Send Back' },
+        { icon: '▣', label: 'Sel. Pane' },
+        { icon: '⇔', label: 'Align' },
+        { icon: '⧉', label: 'Group' },
+        { icon: '↻', label: 'Rotate' },
+      ],
+    },
+  ],
+  Formulas: [
+    {
+      label: 'Function Library',
+      buttons: [
+        { icon: 'fx', label: 'Insert Fn' },
+        { icon: 'Σ', label: 'AutoSum' },
+        { icon: '📅', label: 'Date/Time' },
+        { icon: '🔍', label: 'Lookup' },
+        { icon: '📐', label: 'Math/Trig' },
+        { icon: '···', label: 'More Fns' },
+      ],
+    },
+    {
+      label: 'Defined Names',
+      buttons: [
+        { icon: '🏷️', label: 'Name Mgr' },
+        { icon: '+', label: 'Define' },
+        { icon: '→', label: 'Use In' },
+        { icon: '⬤', label: 'Create' },
+      ],
+    },
+    {
+      label: 'Formula Auditing',
+      buttons: [
+        { icon: '→', label: 'Trace Pre.' },
+        { icon: '←', label: 'Trace Dep.' },
+        { icon: '✕', label: 'Remove Arr.' },
+        { icon: '⚠', label: 'Error Check' },
+        { icon: '👁', label: 'Watch Win.' },
+      ],
+    },
+    {
+      label: 'Calculation',
+      buttons: [
+        { icon: '⚙', label: 'Calc Opts' },
+        { icon: '▶', label: 'Calc Now' },
+        { icon: '📄', label: 'Calc Sheet' },
+      ],
+    },
+  ],
+  Data: [
+    {
+      label: 'Get & Transform',
+      buttons: [
+        { icon: '📥', label: 'Get Data' },
+        { icon: '🔄', label: 'Refresh All' },
+        { icon: '🔗', label: 'Connections' },
+        { icon: '⚙', label: 'Properties' },
+      ],
+    },
+    {
+      label: 'Queries & Connections',
+      buttons: [
+        { icon: '🔗', label: 'Queries' },
+        { icon: '⚙', label: 'Data Types' },
+      ],
+    },
+    {
+      label: 'Sort & Filter',
+      buttons: [
+        { icon: '⬆', label: 'Sort A–Z' },
+        { icon: '⬇', label: 'Sort Z–A' },
+        { icon: '⚙', label: 'Sort' },
+        { icon: '🔽', label: 'Filter' },
+        { icon: '✕', label: 'Clear' },
+        { icon: '↻', label: 'Reapply' },
+        { icon: '✦', label: 'Advanced' },
+      ],
+    },
+    {
+      label: 'Data Tools',
+      buttons: [
+        { icon: '✂️', label: 'Text to Col' },
+        { icon: '⚡', label: 'Flash Fill' },
+        { icon: '🗑', label: 'Remove Dup' },
+        { icon: '✔', label: 'Validation' },
+        { icon: '🔗', label: 'Consolidate' },
+        { icon: '❓', label: 'What-If' },
+      ],
+    },
+    {
+      label: 'Forecast',
+      buttons: [
+        { icon: '📈', label: 'Forecast Sht' },
+      ],
+    },
+    {
+      label: 'Outline',
+      buttons: [
+        { icon: '↔', label: 'Group' },
+        { icon: '÷', label: 'Ungroup' },
+        { icon: '≡', label: 'Subtotal' },
+      ],
+    },
+  ],
+  Review: [
+    {
+      label: 'Proofing',
+      buttons: [
+        { icon: '✓', label: 'Spelling' },
+        { icon: '📖', label: 'Thesaurus' },
+        { icon: '🌐', label: 'Translate' },
+      ],
+    },
+    {
+      label: 'Accessibility',
+      buttons: [
+        { icon: '♿', label: 'Check Acc.' },
+      ],
+    },
+    {
+      label: 'Insights',
+      buttons: [
+        { icon: '💡', label: 'Smart Look.' },
+      ],
+    },
+    {
+      label: 'Language',
+      buttons: [
+        { icon: '🌐', label: 'Translate' },
+      ],
+    },
+    {
+      label: 'Comments',
+      buttons: [
+        { icon: '💬', label: 'New Cmt' },
+        { icon: '🗑', label: 'Delete' },
+        { icon: '◀', label: 'Previous' },
+        { icon: '▶', label: 'Next' },
+        { icon: '👁', label: 'Show All' },
+      ],
+    },
+    {
+      label: 'Notes',
+      buttons: [
+        { icon: '📝', label: 'Notes' },
+        { icon: '👁', label: 'Show Notes' },
+      ],
+    },
+    {
+      label: 'Protect',
+      buttons: [
+        { icon: '🔒', label: 'Protect Sht' },
+        { icon: '📗', label: 'Protect Wbk' },
+        { icon: '🔗', label: 'Share Wbk' },
+        { icon: '✏️', label: 'Allow Edit' },
+      ],
+    },
+  ],
+  View: [
+    {
+      label: 'Workbook Views',
+      buttons: [
+        { icon: '📄', label: 'Normal' },
+        { icon: '📏', label: 'Page Break' },
+        { icon: '📐', label: 'Page Layout' },
+        { icon: '🖥️', label: 'Custom Views' },
+      ],
+    },
+    {
+      label: 'Show',
+      buttons: [
+        { icon: '#', label: 'Ruler' },
+        { icon: '⊞', label: 'Gridlines' },
+        { icon: '≡', label: 'Formula Bar' },
+        { icon: '1', label: 'Headings' },
+      ],
+    },
+    {
+      label: 'Zoom',
+      buttons: [
+        { icon: '🔍', label: 'Zoom' },
+        { icon: '1', label: '100%' },
+        { icon: '⊡', label: 'Zoom Sel.' },
+      ],
+    },
+    {
+      label: 'Window',
+      buttons: [
+        { icon: '🪟', label: 'New Win.' },
+        { icon: '⊞', label: 'Arrange' },
+        { icon: '❄️', label: 'Freeze Panes' },
+        { icon: '⊟', label: 'Split' },
+        { icon: '👁', label: 'Hide' },
+        { icon: '↔', label: 'Side by Side' },
+      ],
+    },
+    {
+      label: 'Macros',
+      buttons: [
+        { icon: '⏺', label: 'Macros' },
       ],
     },
   ],
 };
 
-type RibbonTab = 'home' | 'insert';
+type RibbonTab = 'home' | 'insert' | 'Page Layout' | 'Formulas' | 'Data' | 'Review' | 'View';
 
 export type CellSelection = {
   ref: string;    // e.g. "C4"
@@ -107,6 +376,7 @@ export type CellSelection = {
 export default function ExcelShell() {
   const [activeSheet, setActiveSheet] = useState<string>('resume');
   const [activeRibbon, setActiveRibbon] = useState<RibbonTab>('home');
+  const allRibbonTabs: RibbonTab[] = ['home', 'insert', 'Page Layout', 'Formulas', 'Data', 'Review', 'View'];
   const [selection, setSelection] = useState<CellSelection>({
     ref: 'C1',
     formula: '="Abby Ramadan"',
@@ -144,7 +414,7 @@ export default function ExcelShell() {
 
       {/* Ribbon tab bar */}
       <div style={{ display: 'flex', alignItems: 'flex-end', background: '#217346', padding: '0 8px', flexShrink: 0 }}>
-        {(['home', 'insert'] as RibbonTab[]).map(rt => (
+        {allRibbonTabs.map(rt => (
           <button
             key={rt}
             onClick={() => setActiveRibbon(rt)}
@@ -164,26 +434,6 @@ export default function ExcelShell() {
             }}
           >
             {rt.charAt(0).toUpperCase() + rt.slice(1)}
-          </button>
-        ))}
-        {(['Page Layout', 'Formulas', 'Data', 'Review', 'View'] as string[]).map(rt => (
-          <button
-            key={rt}
-            style={{
-              padding: '7px 18px 6px',
-              fontSize: 12,
-              fontWeight: 500,
-              fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
-              border: 'none',
-              borderRadius: '3px 3px 0 0',
-              cursor: 'pointer',
-              userSelect: 'none',
-              background: 'transparent',
-              color: 'rgba(255,255,255,0.85)',
-              marginRight: 2,
-            }}
-          >
-            {rt}
           </button>
         ))}
       </div>

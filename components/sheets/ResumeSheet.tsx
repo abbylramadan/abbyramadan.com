@@ -294,25 +294,54 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
                   // Bullet row: B spans B+C+D (tci 2–4), E is its own empty cell
                   <>
                     <td colSpan={3} onClick={(ev) => onCellClick(ri, 2, ev)} style={{
-                      ...td(h, cellBg(ri, 2, r.b.bg)),
+                      ...td(h, '#fff'),
                       fontWeight: 400,
                       color: r.b.color ?? '#222',
                       fontStyle: 'normal',
                       paddingLeft: 8,
                       whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
-                      cursor: 'cell', overflow: 'hidden',
-                      // For bullet cells: show outside border on left edge (tci=2) and right edge (tci=4 acts as right side of merged)
-                      boxShadow: (() => {
-                        const s = selBoxShadow(sel, ri, 2, TOTAL, FIRST_COL, LAST_COL);
-                        if (sel?.type === 'col' && (sel.tci === 2 || sel.tci === 3 || sel.tci === 4)) {
-                          return `inset 2px 0 0 0 ${SEL}, inset -2px 0 0 0 ${SEL}` +
-                            (ri === 0 ? `, inset 0 2px 0 0 ${SEL}` : '') +
-                            (ri === TOTAL - 1 ? `, inset 0 -2px 0 0 ${SEL}` : '');
-                        }
-                        return s;
-                      })(),
+                      cursor: 'cell', overflow: 'visible',
+                      position: 'relative',
                     }}>
-                      {r.b.value}
+                      {/* Col B highlight overlay — clipped to col B width only */}
+                      {(sel?.type === 'col' && sel.tci === 2) && (
+                        <div style={{
+                          position: 'absolute',
+                          left: 0, top: 0,
+                          width: COL_WIDTHS[2],
+                          height: '100%',
+                          background: SEL_BG,
+                          boxShadow: `inset 2px 0 0 0 ${SEL}, inset -2px 0 0 0 ${SEL}`
+                            + (ri === 0 ? `, inset 0 2px 0 0 ${SEL}` : '')
+                            + (ri === TOTAL - 1 ? `, inset 0 -2px 0 0 ${SEL}` : ''),
+                          pointerEvents: 'none',
+                          zIndex: 1,
+                        }} />
+                      )}
+                      {/* Row highlight for bullet row */}
+                      {(sel?.type === 'row' && sel.ri === ri) && (
+                        <div style={{
+                          position: 'absolute',
+                          left: 0, top: 0,
+                          width: '100%', height: '100%',
+                          background: SEL_BG,
+                          boxShadow: `inset 0 2px 0 0 ${SEL}, inset 0 -2px 0 0 ${SEL}, inset 2px 0 0 0 ${SEL}`,
+                          pointerEvents: 'none',
+                          zIndex: 1,
+                        }} />
+                      )}
+                      {/* Cell click highlight for bullet row */}
+                      {(sel?.type === 'cell' && sel.ri === ri && sel.tci === 2) && (
+                        <div style={{
+                          position: 'absolute',
+                          left: 0, top: 0,
+                          width: '100%', height: '100%',
+                          boxShadow: `inset 0 0 0 2px ${SEL}`,
+                          pointerEvents: 'none',
+                          zIndex: 1,
+                        }} />
+                      )}
+                      <span style={{ position: 'relative', zIndex: 2 }}>{r.b.value}</span>
                     </td>
                     <td onClick={(ev) => onCellClick(ri, 5, ev)} style={{
                       ...td(h, cellBg(ri, 5, r.e.bg)),
