@@ -153,19 +153,56 @@ const rows: Row[] = [
   spacer(20),
 ];
 
-// ── Highlight logic ──────────────────────────────────────────────────────────
-// sel.type === 'col'  → entire column tci gets green bg + header highlight
-// sel.type === 'row'  → entire row ri gets green bg + row-num highlight
-// sel.type === 'cell' → single cell outline; its col header and row num get light highlight
-
 type Sel =
   | { type: 'cell'; ri: number; tci: number }
   | { type: 'col';  tci: number }
   | { type: 'row';  ri: number }
   | null;
 
+const SEL = '#217346';
+const SEL_BG = '#e2efda';
+
+// For col/row selection: outside border only (top+bottom for col, left+right for row).
+// Uses box-shadow inset so it never shifts layout.
+// firstRow/lastRow/firstCol/lastCol indicate if we're at the edge of the selection range.
+function selBoxShadow(
+  sel: Sel, ri: number, tci: number,
+  totalRows: number, firstContentCol: number, lastContentCol: number,
+): string | undefined {
+  if (!sel) return undefined;
+
+  if (sel.type === 'cell' && sel.ri === ri && sel.tci === tci) {
+    // Full border on all 4 sides for a single cell
+    return `inset 0 0 0 2px ${SEL}`;
+  }
+
+  if (sel.type === 'col' && sel.tci === tci) {
+    // Outside border only: thick top on first row, thick bottom on last row, thick left+right always
+    const topShadow    = ri === 0            ? `inset 0 2px 0 0 ${SEL}` : undefined;
+    const bottomShadow = ri === totalRows - 1 ? `inset 0 -2px 0 0 ${SEL}` : undefined;
+    const sides = `inset 2px 0 0 0 ${SEL}, inset -2px 0 0 0 ${SEL}`;
+    return [sides, topShadow, bottomShadow].filter(Boolean).join(', ');
+  }
+
+  if (sel.type === 'row' && sel.ri === ri) {
+    // Outside border only: thick top+bottom always, thick left on first content col, thick right on last
+    const topBottom = `inset 0 2px 0 0 ${SEL}, inset 0 -2px 0 0 ${SEL}`;
+    const leftShadow  = tci === firstContentCol ? `inset 2px 0 0 0 ${SEL}` : undefined;
+    const rightShadow = tci === lastContentCol   ? `inset -2px 0 0 0 ${SEL}` : undefined;
+    return [topBottom, leftShadow, rightShadow].filter(Boolean).join(', ');
+  }
+
+  return undefined;
+}
+
+// isBulletRow: bullets span B(tci=2)–D(tci=4) with colSpan=3
+function isBullet(r: Row) { return r.b.value.startsWith('•') && r.c.value === '' && r.d.value === '' && r.e.value === ''; }
+
 export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection) => void }) {
   const [sel, setSel] = useState<Sel>(null);
+  const TOTAL = rows.length + 20;
+  const FIRST_COL = 2; // tci of first content col (B)
+  const LAST_COL  = 5; // tci of last content col (E)
 
   function onColHeaderClick(tci: number) {
     setSel({ type: 'col', tci });
@@ -182,31 +219,19 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
     onSelect({ ref: `${COLS[tci] ?? 'B'}${ri + 1}`, formula: rows[ri]?.formula ?? '=""' });
   }
 
-  // Is this column highlighted (col selected, or cell in this col selected)
   const activeCol = sel?.type === 'col' ? sel.tci : sel?.type === 'cell' ? sel.tci : -1;
   const activeRow = sel?.type === 'row' ? sel.ri  : sel?.type === 'cell' ? sel.ri  : -1;
 
-  // Header th background
-  function thBg(tci: number) { return activeCol === tci ? '#e2efda' : '#f0f0f0'; }
-  // Row number background
-  function rnBg(ri: number) { return activeRow === ri ? '#e2efda' : '#f0f0f0'; }
-
-  // Body cell background
-  function bg(ri: number, tci: number, baseBg?: string): string {
+  // Light green bg for col/row selection (not for single cell — that just gets border)
+  function cellBg(ri: number, tci: number, baseBg?: string): string {
     const colHL = sel?.type === 'col' && sel.tci === tci;
     const rowHL = sel?.type === 'row' && sel.ri === ri;
     if (colHL || rowHL) {
-      if (baseBg === G || baseBg === MG) return baseBg; // keep green header rows as-is
-      if (baseBg === LG) return '#c6e8d1';              // slightly darker tint on light rows
-      return '#e2efda';
+      if (baseBg === G || baseBg === MG) return baseBg;
+      if (baseBg === LG) return '#c6e8d1';
+      return SEL_BG;
     }
     return baseBg ?? '#fff';
-  }
-
-  // Green outline on the single selected cell
-  function outline(ri: number, tci: number): React.CSSProperties {
-    if (sel?.type !== 'cell' || sel.ri !== ri || sel.tci !== tci) return {};
-    return { outline: '2px solid #217346', outlineOffset: '-2px', position: 'relative', zIndex: 2 };
   }
 
   return (
@@ -218,12 +243,20 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
 
         <thead>
           <tr>
-            <th style={{ ...thStyle(36), background: sel ? '#e2efda' : '#f0f0f0', cursor: 'default' }} />
+            <th style={{ ...thStyle(36), background: sel ? SEL_BG : '#f0f0f0', cursor: 'default' }} />
             {COLS.slice(1).map((label, i) => {
               const tci = i + 1;
+              const isActive = activeCol === tci;
+              const isColSel = sel?.type === 'col' && sel.tci === tci;
               return (
-                <th key={tci} onClick={() => onColHeaderClick(tci)}
-                  style={{ ...thStyle(COL_WIDTHS[tci]), background: thBg(tci), color: activeCol === tci ? '#217346' : '#555', fontWeight: activeCol === tci ? 700 : 600, cursor: 'pointer' }}>
+                <th key={tci} onClick={() => onColHeaderClick(tci)} style={{
+                  ...thStyle(COL_WIDTHS[tci]),
+                  background: isActive ? SEL_BG : '#f0f0f0',
+                  color: isActive ? SEL : '#555',
+                  fontWeight: isActive ? 700 : 600,
+                  cursor: 'pointer',
+                  boxShadow: isColSel ? `inset 0 2px 0 0 ${SEL}, inset 2px 0 0 0 ${SEL}, inset -2px 0 0 0 ${SEL}` : undefined,
+                }}>
                   {label}
                 </th>
               );
@@ -234,67 +267,119 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
         <tbody>
           {rows.map((r, ri) => {
             const h = r.height ?? 20;
-            // All 4 content cells + 4 filler cells, rendered individually — no colSpan
-            const content: { tci: number; cell: Cell }[] = [
-              { tci: 2, cell: r.b },
-              { tci: 3, cell: r.c },
-              { tci: 4, cell: r.d },
-              { tci: 5, cell: r.e },
-            ];
+            const bullet = isBullet(r);
+            const isRowSel = sel?.type === 'row' && sel.ri === ri;
+
             return (
               <tr key={ri} style={{ height: h }}>
                 {/* Row number */}
-                <td onClick={(ev) => onRowNumClick(ri, ev)}
-                  style={{ ...rowNumStyle, background: rnBg(ri), color: activeRow === ri ? '#217346' : '#555', fontWeight: sel?.type === 'row' && sel.ri === ri ? 700 : 400 }}>
+                <td onClick={(ev) => onRowNumClick(ri, ev)} style={{
+                  ...rowNumStyle,
+                  background: activeRow === ri ? SEL_BG : '#f0f0f0',
+                  color: activeRow === ri ? SEL : '#555',
+                  fontWeight: isRowSel ? 700 : 400,
+                  boxShadow: isRowSel ? `inset 2px 0 0 0 ${SEL}, inset 0 2px 0 0 ${SEL}, inset 0 -2px 0 0 ${SEL}` : undefined,
+                }}>
                   {ri + 1}
                 </td>
+
                 {/* A filler */}
-                <td onClick={(ev) => onCellClick(ri, 1, ev)}
-                  style={{ ...td(h, bg(ri, 1)), cursor: 'cell' }} />
-                {/* B C D E — individual cells, no merging */}
-                {content.map(({ tci, cell }) => (
-                  <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)}
-                    style={{
-                      ...td(h, bg(ri, tci, cell.bg)),
-                      ...outline(ri, tci),
-                      fontWeight: cell.bold ? 700 : 400,
-                      color: cell.color ?? '#212121',
-                      fontStyle: cell.italic ? 'italic' : 'normal',
-                      textAlign: cell.align ?? 'left',
-                      paddingLeft: tci === 2 ? 8 + (cell.indent ?? 0) * 16 : 8,
-                      whiteSpace: 'normal',
-                      wordBreak: 'break-word',
-                      lineHeight: '1.35',
-                      verticalAlign: 'middle',
-                      cursor: 'cell',
-                      overflow: 'hidden',
+                <td onClick={(ev) => onCellClick(ri, 1, ev)} style={{
+                  ...td(h, cellBg(ri, 1)),
+                  cursor: 'cell',
+                  boxShadow: selBoxShadow(sel, ri, 1, TOTAL, FIRST_COL, LAST_COL),
+                }} />
+
+                {bullet ? (
+                  // Bullet row: B spans B+C+D (tci 2–4), E is its own empty cell
+                  <>
+                    <td colSpan={3} onClick={(ev) => onCellClick(ri, 2, ev)} style={{
+                      ...td(h, cellBg(ri, 2, r.b.bg)),
+                      fontWeight: 400,
+                      color: r.b.color ?? '#222',
+                      fontStyle: 'normal',
+                      paddingLeft: 8,
+                      whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
+                      cursor: 'cell', overflow: 'hidden',
+                      // For bullet cells: show outside border on left edge (tci=2) and right edge (tci=4 acts as right side of merged)
+                      boxShadow: (() => {
+                        const s = selBoxShadow(sel, ri, 2, TOTAL, FIRST_COL, LAST_COL);
+                        if (sel?.type === 'col' && (sel.tci === 2 || sel.tci === 3 || sel.tci === 4)) {
+                          return `inset 2px 0 0 0 ${SEL}, inset -2px 0 0 0 ${SEL}` +
+                            (ri === 0 ? `, inset 0 2px 0 0 ${SEL}` : '') +
+                            (ri === TOTAL - 1 ? `, inset 0 -2px 0 0 ${SEL}` : '');
+                        }
+                        return s;
+                      })(),
                     }}>
-                    {cell.value}
-                  </td>
-                ))}
+                      {r.b.value}
+                    </td>
+                    <td onClick={(ev) => onCellClick(ri, 5, ev)} style={{
+                      ...td(h, cellBg(ri, 5, r.e.bg)),
+                      cursor: 'cell',
+                      boxShadow: selBoxShadow(sel, ri, 5, TOTAL, FIRST_COL, LAST_COL),
+                    }} />
+                  </>
+                ) : (
+                  // All other rows: individual B C D E cells
+                  <>
+                    {([
+                      { tci: 2, c: r.b },
+                      { tci: 3, c: r.c },
+                      { tci: 4, c: r.d },
+                      { tci: 5, c: r.e },
+                    ] as { tci: number; c: Cell }[]).map(({ tci, c }) => (
+                      <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
+                        ...td(h, cellBg(ri, tci, c.bg)),
+                        fontWeight: c.bold ? 700 : 400,
+                        color: c.color ?? '#212121',
+                        fontStyle: c.italic ? 'italic' : 'normal',
+                        textAlign: c.align ?? 'left',
+                        paddingLeft: tci === 2 ? 8 + (c.indent ?? 0) * 16 : 8,
+                        whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: '1.35', verticalAlign: 'middle',
+                        cursor: 'cell', overflow: 'hidden',
+                        boxShadow: selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL),
+                      }}>
+                        {c.value}
+                      </td>
+                    ))}
+                  </>
+                )}
+
                 {/* F G H filler */}
                 {[6, 7, 8].map(tci => (
-                  <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)}
-                    style={{ ...td(h, bg(ri, tci)), cursor: 'cell' }} />
+                  <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
+                    ...td(h, cellBg(ri, tci)),
+                    cursor: 'cell',
+                    boxShadow: selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL),
+                  }} />
                 ))}
               </tr>
             );
           })}
 
-          {/* Extra empty rows */}
           {Array.from({ length: 20 }).map((_, i) => {
             const ri = rows.length + i;
+            const isRowSel = sel?.type === 'row' && sel.ri === ri;
             return (
               <tr key={`e${i}`} style={{ height: 20 }}>
-                <td onClick={(ev) => onRowNumClick(ri, ev)}
-                  style={{ ...rowNumStyle, background: rnBg(ri), color: activeRow === ri ? '#217346' : '#aaa', fontWeight: sel?.type === 'row' && sel.ri === ri ? 700 : 400 }}>
+                <td onClick={(ev) => onRowNumClick(ri, ev)} style={{
+                  ...rowNumStyle,
+                  background: activeRow === ri ? SEL_BG : '#f0f0f0',
+                  color: activeRow === ri ? SEL : '#aaa',
+                  fontWeight: isRowSel ? 700 : 400,
+                  boxShadow: isRowSel ? `inset 2px 0 0 0 ${SEL}, inset 0 2px 0 0 ${SEL}, inset 0 -2px 0 0 ${SEL}` : undefined,
+                }}>
                   {ri + 1}
                 </td>
                 {Array.from({ length: 8 }).map((_, ci) => {
                   const tci = ci + 1;
                   return (
-                    <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)}
-                      style={{ ...td(20, bg(ri, tci)), cursor: 'cell' }} />
+                    <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
+                      ...td(20, cellBg(ri, tci)),
+                      cursor: 'cell',
+                      boxShadow: selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL),
+                    }} />
                   );
                 })}
               </tr>

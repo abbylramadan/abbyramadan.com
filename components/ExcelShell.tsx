@@ -143,16 +143,25 @@ export default function ExcelShell() {
       </div>
 
       {/* Ribbon tab bar */}
-      <div className="flex items-end bg-[#217346] px-3 shrink-0">
+      <div style={{ display: 'flex', alignItems: 'flex-end', background: '#217346', padding: '0 8px', flexShrink: 0 }}>
         {(['home', 'insert'] as RibbonTab[]).map(rt => (
           <button
             key={rt}
             onClick={() => setActiveRibbon(rt)}
-            className={`px-5 py-2 text-[12px] font-medium rounded-t-sm transition-colors select-none ${
-              activeRibbon === rt
-                ? 'bg-white text-[#217346] shadow-sm'
-                : 'text-white/90 hover:bg-white/15'
-            }`}
+            style={{
+              padding: '7px 18px 6px',
+              fontSize: 12,
+              fontWeight: 500,
+              fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
+              border: 'none',
+              borderRadius: '3px 3px 0 0',
+              cursor: 'pointer',
+              userSelect: 'none',
+              transition: 'background 0.1s',
+              background: activeRibbon === rt ? '#ffffff' : 'transparent',
+              color: activeRibbon === rt ? '#217346' : 'rgba(255,255,255,0.92)',
+              marginRight: 2,
+            }}
           >
             {rt.charAt(0).toUpperCase() + rt.slice(1)}
           </button>
@@ -160,7 +169,19 @@ export default function ExcelShell() {
         {(['Page Layout', 'Formulas', 'Data', 'Review', 'View'] as string[]).map(rt => (
           <button
             key={rt}
-            className="px-5 py-2 text-[12px] font-medium rounded-t-sm text-white/90 hover:bg-white/15 select-none transition-colors"
+            style={{
+              padding: '7px 18px 6px',
+              fontSize: 12,
+              fontWeight: 500,
+              fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
+              border: 'none',
+              borderRadius: '3px 3px 0 0',
+              cursor: 'pointer',
+              userSelect: 'none',
+              background: 'transparent',
+              color: 'rgba(255,255,255,0.85)',
+              marginRight: 2,
+            }}
           >
             {rt}
           </button>
