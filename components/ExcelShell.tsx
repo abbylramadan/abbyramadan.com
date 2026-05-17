@@ -509,17 +509,21 @@ export default function ExcelShell() {
         </div>
 
         {/* Status bar */}
-        <div className="flex items-center justify-between bg-[#217346] text-white text-[11px] px-3 h-5 select-none">
-          <div className="flex items-center gap-4">
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: '#217346', color: '#fff', fontSize: 12,
+          padding: '0 16px', height: 24, userSelect: 'none',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <span>Ready</span>
-            <span className="text-white/70">|</span>
+            <span style={{ color: 'rgba(255,255,255,0.7)' }}>|</span>
             <span>🔒 Sheet protected</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <span>Average: –</span>
             <span>Count: –</span>
             <span>Sum: –</span>
-            <span className="text-white/70">|</span>
+            <span style={{ color: 'rgba(255,255,255,0.7)' }}>|</span>
             <span>100%</span>
           </div>
         </div>

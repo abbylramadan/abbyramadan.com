@@ -219,7 +219,19 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
   function onCellClick(ri: number, tci: number, ev: React.MouseEvent) {
     ev.stopPropagation();
     setSel({ type: 'cell', ri, tci });
-    onSelect({ ref: `${COLS[tci] ?? 'B'}${ri + 1}`, formula: rows[ri]?.formula ?? '=""' });
+    const row = rows[ri];
+    // Only B (tci=2) holds the row's XLOOKUP formula. Other cells show their literal value if non-empty.
+    // Empty cells (no value) get blank formula bar.
+    let formula = '';
+    if (row) {
+      const cell = tci === 2 ? row.b : tci === 3 ? row.c : tci === 4 ? row.d : tci === 5 ? row.e : null;
+      if (tci === 2 && row.b.value) {
+        formula = row.formula;
+      } else if (cell && cell.value) {
+        formula = cell.value;
+      }
+    }
+    onSelect({ ref: `${COLS[tci] ?? 'B'}${ri + 1}`, formula });
   }
 
   const activeCol = sel?.type === 'col' ? sel.tci : sel?.type === 'cell' ? sel.tci : -1;
@@ -306,11 +318,11 @@ export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection)
                   { tci: 5, c: r.e },
                 ] as { tci: number; c: Cell }[]).map(({ tci, c }) => {
                   const shadow = selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL);
-                  // Spanning rows: B overflows, C/D transparent + no internal borders
                   const isBleedThrough = spanning && (tci === 3 || tci === 4);
-                  // For bleed-through cells: use actual bg (so colored rows stay colored) unless it's white/undefined
+                  // Bleed-through cells: keep their natural bg (transparent or matching row bg) even when highlighted,
+                  // so overflowing B text remains visible. Only the box-shadow border indicates selection on these cells.
                   const bleedBg = c.bg && c.bg !== '#fff' ? c.bg : 'transparent';
-                  const bg = isBleedThrough ? cellBg(ri, tci, bleedBg) : cellBg(ri, tci, c.bg);
+                  const bg = isBleedThrough ? bleedBg : cellBg(ri, tci, c.bg);
                   return (
                     <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
                       ...td(h, bg),
@@ -413,7 +425,7 @@ function td(height: number, bg: string): React.CSSProperties {
   return {
     height, background: bg,
     border: BORDER, borderLeft: 'none', borderTop: 'none',
-    fontSize: 12, padding: '2px 8px',
+    fontSize: 14, padding: '3px 8px',
     userSelect: 'none',
     fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
   };

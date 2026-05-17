@@ -143,7 +143,17 @@ export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelectio
   function onCellClick(ri: number, tci: number, ev: React.MouseEvent, link?: string) {
     ev.stopPropagation();
     setSel({ type: 'cell', ri, tci });
-    onSelect({ ref: `${COLS[tci] ?? 'B'}${ri + 1}`, formula: rows[ri]?.formula ?? '=""' });
+    const row = rows[ri];
+    let formula = '';
+    if (row) {
+      const cell = tci === 2 ? row.b : tci === 3 ? row.c : tci === 4 ? row.d : tci === 5 ? row.e : null;
+      if (tci === 2 && row.b.value) {
+        formula = row.formula;
+      } else if (cell && cell.value) {
+        formula = cell.value;
+      }
+    }
+    onSelect({ ref: `${COLS[tci] ?? 'B'}${ri + 1}`, formula });
     if (link) window.open(link, '_blank');
   }
 
@@ -270,7 +280,7 @@ function tdStyle(height: number, bg: string): React.CSSProperties {
   return {
     height, background: bg,
     border: BORDER, borderLeft: 'none', borderTop: 'none',
-    fontSize: 12, padding: '2px 8px',
+    fontSize: 14, padding: '3px 8px',
     userSelect: 'none',
     fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
   };
