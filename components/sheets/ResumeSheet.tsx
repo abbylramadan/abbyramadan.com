@@ -407,7 +407,7 @@ function thStyle(width: number): React.CSSProperties {
     fontSize: 11, fontWeight: 600, color: '#555',
     textAlign: 'center', padding: 0,
     position: 'sticky', top: 0, zIndex: 10,
-    fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
+    fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif",
   };
 }
 
@@ -418,7 +418,7 @@ const rowNumStyle: React.CSSProperties = {
   fontSize: 11, color: '#555',
   textAlign: 'center', padding: 0,
   userSelect: 'none', cursor: 'pointer',
-  fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
+  fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif",
 };
 
 function td(height: number, bg: string): React.CSSProperties {
@@ -427,6 +427,6 @@ function td(height: number, bg: string): React.CSSProperties {
     border: BORDER, borderLeft: 'none', borderTop: 'none',
     fontSize: 14, padding: '3px 8px',
     userSelect: 'none',
-    fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
+    fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif",
   };
 }

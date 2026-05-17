@@ -394,7 +394,7 @@ export default function ExcelShell() {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#f3f3f3]" style={{ fontFamily: "'Calibri', 'Segoe UI', Arial, sans-serif" }}>
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#f3f3f3]" style={{ fontFamily: "'Calibri', 'Carlito', 'Segoe UI', Arial, sans-serif" }}>
 
       {/* Title bar */}
       <div className="flex items-center justify-between bg-[#217346] text-white px-3 h-8 text-xs select-none shrink-0">
@@ -422,7 +422,7 @@ export default function ExcelShell() {
               padding: '7px 18px 6px',
               fontSize: 12,
               fontWeight: 500,
-              fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
+              fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif",
               border: 'none',
               borderRadius: '3px 3px 0 0',
               cursor: 'pointer',
@@ -452,7 +452,7 @@ export default function ExcelShell() {
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                       gap: 3, padding: '4px 6px', minWidth: 40, borderRadius: 3,
                       border: '1px solid transparent', background: 'none', cursor: 'pointer',
-                      fontFamily: "'Calibri','Segoe UI',Arial,sans-serif",
+                      fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif",
                     }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#e8e8e8'; (e.currentTarget as HTMLElement).style.borderColor = '#c8c8c8'; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.borderColor = 'transparent'; }}

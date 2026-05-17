@@ -39,7 +39,7 @@ html, body {
 body {
   background: #f3f3f3;
   color: var(--xl-text);
-  font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Calibri', 'Carlito', 'Segoe UI', Arial, sans-serif;
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
