@@ -74,15 +74,17 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
     rowHeights.push(i < rows.length ? (rows[i].height ?? EMPTY_ROW_HEIGHT) : EMPTY_ROW_HEIGHT);
   }
   const gridTemplateColumns = colWidths.map(w => `${w}px`).join(' ');
-  const gridTemplateRows = [`${HEADER_HEIGHT}px`, ...rowHeights.map(h => `${h}px`)].join(' ');
+  // Use minmax(h, auto) so rows grow when wrapped text needs more height,
+  // without affecting column widths (max-content would expand the columns too).
+  const gridTemplateRows = [`${HEADER_HEIGHT}px`, ...rowHeights.map(h => `minmax(${h}px, auto)`)].join(' ');
   const totalWidth = colWidths.reduce((a, b) => a + b, 0);
 
-  // Bleed width per content column: distance from this column's left edge to H's right edge.
+  // Bleed width per content column: distance from this column's left edge to E's right edge.
   // Text inside a content cell wraps within this width — so it extends past the cell's own column
-  // but stops at H instead of running off forever.
+  // but stops at the end of E.
   const colLeft: number[] = [0];
   for (let i = 0; i < colWidths.length; i++) colLeft.push(colLeft[i] + colWidths[i]);
-  const rightEdge = colLeft[colWidths.length];
+  const rightEdge = colLeft[LAST_CONTENT_COL + 1]; // right edge of E
   const bleedWidth = (tci: number) => rightEdge - colLeft[tci];
 
   // Selection helpers
@@ -223,6 +225,15 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                   zIndex: hasOwnText ? 2 : 1,
                 };
 
+                if (shouldBleed) {
+                  // Bleeding cells: flex container so inner text div is vertically centered.
+                  // Cell grows vertically to fit the wrapped text inside the inner div.
+                  cellStyle.display = 'flex';
+                  cellStyle.alignItems = 'center';
+                  cellStyle.padding = '3px 0';
+                  cellStyle.paddingLeft = padLeft;
+                }
+
                 // Right-aligned, non-bleeding, and empty cells use flex centering on the cell itself
                 if (!shouldBleed) {
                   cellStyle.display = 'flex';
@@ -240,15 +251,11 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                   if (cell?.link)   cellStyle.textDecoration = 'underline';
                 }
 
-                // Inner text div for bleeding cells: anchored at cell's left padding, extends to H's right edge.
-                // Text wraps naturally within that width.
+                // Inner text div for bleeding cells: constrained to the bleed width so it wraps at E.
+                // Stays in normal flow so the cell (and therefore the grid row) grows to fit wrapped text.
                 const textStyle: CSSProperties | undefined = shouldBleed && cell ? {
-                  position: 'absolute',
-                  left: padLeft,
-                  top: 0, bottom: 0,
                   width: bleedWidth(tci) - padLeft,
-                  display: 'flex',
-                  alignItems: 'center',
+                  flexShrink: 0,         // don't let flex shrink it back to cell width
                   whiteSpace: 'normal',
                   wordBreak: 'break-word',
                   lineHeight: 1.35,
