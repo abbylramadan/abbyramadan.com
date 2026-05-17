@@ -252,31 +252,63 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                 const shouldBleed = isContent && hasOwnText && cell?.align !== 'right';
                 const padLeft = 8 + (cell?.indent ?? 0) * 16;
 
-                // Right border: if my bg matches the next cell's bg (non-white), use my bg so the divider vanishes.
-                const nextCell: Cell | null = row
-                  ? (tci === 2 ? row.c
-                    : tci === 3 ? row.d
-                    : tci === 4 ? row.e
-                    : null)
-                  : null;
-                const nextBg = nextCell?.bg ?? '#fff';
-                const matchesNeighbor = !!cell?.bg && cell.bg !== '#fff' && cell.bg === nextBg;
-                const rightBorderColor = matchesNeighbor ? cell!.bg! : BORDER_COLOR;
+                // Helper to read a content cell by its column index
+                const cellAt = (col: number): Cell | null => !row ? null
+                  : col === 2 ? row.b : col === 3 ? row.c : col === 4 ? row.d : col === 5 ? row.e : null;
 
-                // Check whether bleeding text from a left neighbor is passing through me
-                let bleedReachesMe = false;
-                if (isContent && !hasOwnText && row) {
-                  for (let leftCol = FIRST_CONTENT_COL; leftCol < tci; leftCol++) {
-                    const leftCell = leftCol === 2 ? row.b : leftCol === 3 ? row.c : leftCol === 4 ? row.d : row.e;
-                    if (leftCell.value && leftCell.align !== 'right') {
-                      bleedReachesMe = true;
+                // "Bleed run": any cell that's part of a contiguous run starting from a bleeding cell
+                // (B–E with text, non-right-aligned) and extending through empty cells to its right.
+                // For all cells in such a run we hide internal vertical dividers.
+                // Find the nearest bleeding source to my left (inclusive of me); empty cells from that
+                // source up to (but not past) the next non-empty cell are part of the run.
+                let inBleedRun = false;
+                let isBleedRunSource = false;
+                let isBleedRunEnd = false; // last cell in the run (border-right stays)
+                if (isContent && row) {
+                  // Walk left from me to find a bleeding source. Stop at any other text cell.
+                  let sourceCol = -1;
+                  for (let c = tci; c >= FIRST_CONTENT_COL; c--) {
+                    const lc = cellAt(c)!;
+                    if (lc.value && lc.align !== 'right') {
+                      // Bleeding source found at column c. Run is valid only if every cell strictly
+                      // between c and me is empty.
+                      let runOk = true;
+                      for (let m = c + 1; m < tci; m++) {
+                        const mc = cellAt(m)!;
+                        if (mc.value) { runOk = false; break; }
+                      }
+                      if (runOk) { sourceCol = c; }
                       break;
                     }
+                    if (lc.value) break; // non-bleeding text cell to my left blocks the run
+                  }
+                  if (sourceCol >= 0) {
+                    inBleedRun = true;
+                    isBleedRunSource = sourceCol === tci;
+                    // Run ends at last empty cell before the next non-empty cell (or LAST_CONTENT_COL).
+                    let endCol = tci;
+                    for (let c = tci + 1; c <= LAST_CONTENT_COL; c++) {
+                      const nc = cellAt(c)!;
+                      if (nc.value) break;
+                      endCol = c;
+                    }
+                    isBleedRunEnd = tci === endCol;
                   }
                 }
-                // Left border: if bleeding text from a left neighbor reaches me, hide the vertical divider
-                // by matching it to the cell's current background (white by default, light green when highlighted).
-                const leftBorderColor = bleedReachesMe ? bg : undefined;
+
+                // Right border: hide between cells inside a bleed run; keep at the run's right edge.
+                // Also hide between same-bg neighbors (section headers).
+                const nextCell = cellAt(tci + 1);
+                const nextBg = nextCell?.bg ?? '#fff';
+                const matchesNeighbor = !!cell?.bg && cell.bg !== '#fff' && cell.bg === nextBg;
+                const rightBorderColor = matchesNeighbor
+                  ? cell!.bg!
+                  : (inBleedRun && !isBleedRunEnd)
+                    ? bg
+                    : BORDER_COLOR;
+
+                // Left border: hide for non-source cells in the run (their left divider would slash the text).
+                const leftBorderColor = (inBleedRun && !isBleedRunSource) ? bg : undefined;
 
                 const cellStyle: CSSProperties = {
                   gridColumn: tci + 1, gridRow,
