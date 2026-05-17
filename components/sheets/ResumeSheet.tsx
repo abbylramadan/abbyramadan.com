@@ -1,36 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import Sheet, { type Cell, type Row, G, LG, MG, W } from './Sheet';
 import type { CellSelection } from '../ExcelShell';
 
-// col indices: 0=row#  1=A(filler)  2=B  3=C  4=D  5=E  6=F  7=G  8=H
-const COLS = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const COL_WIDTHS = [36, 30, 200, 180, 180, 150, 60, 60, 60];
-const BORDER = '1px solid #d0d7de';
-
-const G = '#217346';
-const LG = '#e9f5ee';
-const MG = '#107c41';
-const W = '#ffffff';
-
-type Cell = {
-  value: string;
-  bold?: boolean;
-  color?: string;
-  bg?: string;
-  italic?: boolean;
-  indent?: number;
-  align?: 'left' | 'center' | 'right';
-};
-
-// Every row has exactly 5 content cells: B C D E F(filler)
-// No colSpan ever. Text wraps within its column.
-type Row = {
-  b: Cell; c: Cell; d: Cell; e: Cell; // content cols
-  height?: number;
-  ref: string;
-  formula: string;
-};
 
 function ec(): Cell { return { value: '' }; }
 function filled(v: string, bg: string, bold?: boolean, italic?: boolean, color?: string): Cell {
@@ -40,39 +13,32 @@ function txt(v: string, color?: string, bold?: boolean, italic?: boolean, indent
   return { value: v, color: color ?? '#222', bold, italic, indent, align };
 }
 
-// Section header: same bg across all 4 content cells, text only in B
 function sectionRow(ref: string, formula: string, label: string, bg: string, height?: number): Row {
   return { ref, formula, height,
     b: filled(label, bg, true), c: filled('', bg), d: filled('', bg), e: filled('', bg) };
 }
-// Empty spacer row
 function spacer(height = 6): Row {
-  return { ref: '', formula: '=""', height, b: ec(), c: ec(), d: ec(), e: ec() };
+  return { ref: '', formula: '', height, b: ec(), c: ec(), d: ec(), e: ec() };
 }
-// Company row: bold name in B, location right-aligned in E, C/D empty
 function companyRow(ref: string, formula: string, name: string, location: string): Row {
   return { ref, formula,
     b: txt(name, '#1a1a1a', true), c: ec(), d: ec(),
     e: txt(location, '#555', false, false, 0, 'right') };
 }
-// Role row: italic role in B, period right-aligned in E
 function roleRow(ref: string, formula: string, role: string, period: string): Row {
   return { ref, formula,
     b: txt(role, '#333', false, true), c: ec(), d: ec(),
     e: txt(period, '#555', false, true, 0, 'right') };
 }
-// Bullet: text in B (overflow visible into C/D visually but each cell is its own td)
 function bulletRow(ref: string, formula: string, text: string, height?: number): Row {
   return { ref, formula, height,
-    b: txt('•  ' + text, '#222', false, false, 0), c: ec(), d: ec(), e: ec() };
+    b: txt('•  ' + text, '#222'), c: ec(), d: ec(), e: ec() };
 }
-// Plain text row (education degree etc)
 function plainRow(ref: string, formula: string, text: string, period: string, height?: number): Row {
   return { ref, formula, height,
     b: txt(text, '#222'), c: ec(), d: ec(),
     e: txt(period, '#555', false, true, 0, 'right') };
 }
-// Skills text (full width, light green bg)
 function skillsRow(ref: string, formula: string, text: string): Row {
   return { ref, formula, height: 28,
     b: { value: text, color: '#222', bg: LG },
@@ -153,280 +119,6 @@ const rows: Row[] = [
   spacer(20),
 ];
 
-type Sel =
-  | { type: 'cell'; ri: number; tci: number }
-  | { type: 'col';  tci: number }
-  | { type: 'row';  ri: number }
-  | null;
-
-const SEL = '#217346';
-const SEL_BG = '#e2efda';
-
-// For col/row selection: outside border only (top+bottom for col, left+right for row).
-// Uses box-shadow inset so it never shifts layout.
-// firstRow/lastRow/firstCol/lastCol indicate if we're at the edge of the selection range.
-function selBoxShadow(
-  sel: Sel, ri: number, tci: number,
-  totalRows: number, firstContentCol: number, lastContentCol: number,
-): string | undefined {
-  if (!sel) return undefined;
-
-  if (sel.type === 'cell' && sel.ri === ri && sel.tci === tci) {
-    // Full border on all 4 sides for a single cell
-    return `inset 0 0 0 2px ${SEL}`;
-  }
-
-  if (sel.type === 'col' && sel.tci === tci) {
-    // Outside border only: thick top on first row, thick bottom on last row, thick left+right always
-    const topShadow    = ri === 0            ? `inset 0 2px 0 0 ${SEL}` : undefined;
-    const bottomShadow = ri === totalRows - 1 ? `inset 0 -2px 0 0 ${SEL}` : undefined;
-    const sides = `inset 2px 0 0 0 ${SEL}, inset -2px 0 0 0 ${SEL}`;
-    return [sides, topShadow, bottomShadow].filter(Boolean).join(', ');
-  }
-
-  if (sel.type === 'row' && sel.ri === ri) {
-    // Outside border only: thick top+bottom always, thick left on first content col, thick right on last
-    const topBottom = `inset 0 2px 0 0 ${SEL}, inset 0 -2px 0 0 ${SEL}`;
-    const leftShadow  = tci === firstContentCol ? `inset 2px 0 0 0 ${SEL}` : undefined;
-    const rightShadow = tci === lastContentCol   ? `inset -2px 0 0 0 ${SEL}` : undefined;
-    return [topBottom, leftShadow, rightShadow].filter(Boolean).join(', ');
-  }
-
-  return undefined;
-}
-
-function isBullet(r: Row) { return r.b.value.startsWith('•') && r.c.value === '' && r.d.value === '' && r.e.value === ''; }
-// Rows where B text should overflow into C/D visually with no internal vertical borders
-function isSpanning(r: Row) {
-  return isBullet(r) || (r.c.value === '' && r.d.value === '' && r.e.value === '' && r.b.value !== '');
-}
-
 export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection) => void }) {
-  const [sel, setSel] = useState<Sel>(null);
-  const TOTAL = rows.length + 20;
-  const FIRST_COL = 2; // tci of first content col (B)
-  const LAST_COL  = 5; // tci of last content col (E)
-
-  function onColHeaderClick(tci: number) {
-    setSel({ type: 'col', tci });
-    onSelect({ ref: `${COLS[tci]}:${COLS[tci]}`, formula: `=COLUMN(${COLS[tci]}:${COLS[tci]})` });
-  }
-  function onRowNumClick(ri: number, ev: React.MouseEvent) {
-    ev.stopPropagation();
-    setSel({ type: 'row', ri });
-    onSelect({ ref: `${ri + 1}:${ri + 1}`, formula: `=ROW(${ri + 1}:${ri + 1})` });
-  }
-  function onCellClick(ri: number, tci: number, ev: React.MouseEvent) {
-    ev.stopPropagation();
-    setSel({ type: 'cell', ri, tci });
-    const row = rows[ri];
-    // Only B (tci=2) holds the row's XLOOKUP formula. Other cells show their literal value if non-empty.
-    // Empty cells (no value) get blank formula bar.
-    let formula = '';
-    if (row) {
-      const cell = tci === 2 ? row.b : tci === 3 ? row.c : tci === 4 ? row.d : tci === 5 ? row.e : null;
-      if (tci === 2 && row.b.value) {
-        formula = row.formula;
-      } else if (cell && cell.value) {
-        formula = cell.value;
-      }
-    }
-    onSelect({ ref: `${COLS[tci] ?? 'B'}${ri + 1}`, formula });
-  }
-
-  const activeCol = sel?.type === 'col' ? sel.tci : sel?.type === 'cell' ? sel.tci : -1;
-  const activeRow = sel?.type === 'row' ? sel.ri  : sel?.type === 'cell' ? sel.ri  : -1;
-
-  // Light green bg for col/row selection (not for single cell — that just gets border)
-  function cellBg(ri: number, tci: number, baseBg?: string): string {
-    const colHL = sel?.type === 'col' && sel.tci === tci;
-    const rowHL = sel?.type === 'row' && sel.ri === ri;
-    if (colHL || rowHL) {
-      if (baseBg === G || baseBg === MG) return baseBg;
-      if (baseBg === LG) return '#c6e8d1';
-      return SEL_BG;
-    }
-    return baseBg ?? '#fff';
-  }
-
-  return (
-    <div className="h-full overflow-auto" style={{ background: '#fff' }}>
-      <table className="border-collapse" style={{ tableLayout: 'fixed', width: '100%', minWidth: 860, borderSpacing: 0 }}>
-        <colgroup>
-          {COL_WIDTHS.map((w, i) => <col key={i} style={{ width: w }} />)}
-        </colgroup>
-
-        <thead>
-          <tr>
-            <th style={{ ...thStyle(36), background: sel ? SEL_BG : '#f0f0f0', cursor: 'default' }} />
-            {COLS.slice(1).map((label, i) => {
-              const tci = i + 1;
-              const isActive = activeCol === tci;
-              const isColSel = sel?.type === 'col' && sel.tci === tci;
-              return (
-                <th key={tci} onClick={() => onColHeaderClick(tci)} style={{
-                  ...thStyle(COL_WIDTHS[tci]),
-                  background: isActive ? SEL_BG : '#f0f0f0',
-                  color: isActive ? SEL : '#555',
-                  fontWeight: isActive ? 700 : 600,
-                  cursor: 'pointer',
-                  boxShadow: isColSel ? `inset 0 2px 0 0 ${SEL}, inset 2px 0 0 0 ${SEL}, inset -2px 0 0 0 ${SEL}` : undefined,
-                }}>
-                  {label}
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-
-        <tbody>
-          {rows.map((r, ri) => {
-            const h = r.height ?? 20;
-            const spanning = isSpanning(r);
-            const isRowSel = sel?.type === 'row' && sel.ri === ri;
-
-            return (
-              <tr key={ri} style={{ height: h }}>
-                {/* Row number */}
-                <td onClick={(ev) => onRowNumClick(ri, ev)} style={{
-                  ...rowNumStyle,
-                  background: activeRow === ri ? SEL_BG : '#f0f0f0',
-                  color: activeRow === ri ? SEL : '#555',
-                  fontWeight: isRowSel ? 700 : 400,
-                  boxShadow: isRowSel ? `inset 2px 0 0 0 ${SEL}, inset 0 2px 0 0 ${SEL}, inset 0 -2px 0 0 ${SEL}` : undefined,
-                  position: isRowSel ? 'relative' : undefined,
-                  zIndex: isRowSel ? 2 : undefined,
-                }}>
-                  {ri + 1}
-                </td>
-
-                {/* A filler */}
-                {(() => { const s = selBoxShadow(sel, ri, 1, TOTAL, FIRST_COL, LAST_COL); return (
-                  <td onClick={(ev) => onCellClick(ri, 1, ev)} style={{
-                    ...td(h, cellBg(ri, 1)),
-                    cursor: 'cell',
-                    boxShadow: s,
-                    position: s ? 'relative' : undefined,
-                    zIndex: s ? 2 : undefined,
-                  }} />
-                ); })()}
-
-                {([
-                  { tci: 2, c: r.b },
-                  { tci: 3, c: r.c },
-                  { tci: 4, c: r.d },
-                  { tci: 5, c: r.e },
-                ] as { tci: number; c: Cell }[]).map(({ tci, c }) => {
-                  const shadow = selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL);
-                  const isBleedThrough = spanning && (tci === 3 || tci === 4);
-                  // Bleed-through cells: keep their natural bg (transparent or matching row bg) even when highlighted,
-                  // so overflowing B text remains visible. Only the box-shadow border indicates selection on these cells.
-                  const bleedBg = c.bg && c.bg !== '#fff' ? c.bg : 'transparent';
-                  const bg = isBleedThrough ? bleedBg : cellBg(ri, tci, c.bg);
-                  return (
-                    <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
-                      ...td(h, bg),
-                      fontWeight: c.bold ? 700 : 400,
-                      color: c.color ?? '#212121',
-                      fontStyle: c.italic ? 'italic' : 'normal',
-                      textAlign: c.align ?? 'left',
-                      paddingLeft: tci === 2 ? 8 + (c.indent ?? 0) * 16 : 8,
-                      lineHeight: '1.35', verticalAlign: 'middle',
-                      cursor: 'cell',
-                      // Spanning: B overflows, C/D hide internal borders
-                      overflow: (spanning && tci === 2) ? 'visible' : 'hidden',
-                      whiteSpace: (spanning && tci === 2) ? 'nowrap' : 'normal',
-                      wordBreak: spanning ? undefined : 'break-word',
-                      borderLeft: isBleedThrough ? 'none' : undefined,
-                      borderRight: (spanning && (tci === 2 || tci === 3)) ? 'none' : undefined,
-                      // zIndex so box-shadow paints above adjacent cell borders
-                      boxShadow: shadow,
-                      position: shadow ? 'relative' : undefined,
-                      zIndex: shadow ? 2 : undefined,
-                    }}>
-                      {c.value}
-                    </td>
-                  );
-                })}
-
-                {/* F G H filler */}
-                {[6, 7, 8].map(tci => {
-                  const s = selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL);
-                  return (
-                    <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
-                      ...td(h, cellBg(ri, tci)),
-                      cursor: 'cell',
-                      boxShadow: s,
-                      position: s ? 'relative' : undefined,
-                      zIndex: s ? 2 : undefined,
-                    }} />
-                  );
-                })}
-              </tr>
-            );
-          })}
-
-          {Array.from({ length: 20 }).map((_, i) => {
-            const ri = rows.length + i;
-            const isRowSel = sel?.type === 'row' && sel.ri === ri;
-            return (
-              <tr key={`e${i}`} style={{ height: 20 }}>
-                <td onClick={(ev) => onRowNumClick(ri, ev)} style={{
-                  ...rowNumStyle,
-                  background: activeRow === ri ? SEL_BG : '#f0f0f0',
-                  color: activeRow === ri ? SEL : '#aaa',
-                  fontWeight: isRowSel ? 700 : 400,
-                  boxShadow: isRowSel ? `inset 2px 0 0 0 ${SEL}, inset 0 2px 0 0 ${SEL}, inset 0 -2px 0 0 ${SEL}` : undefined,
-                }}>
-                  {ri + 1}
-                </td>
-                {Array.from({ length: 8 }).map((_, ci) => {
-                  const tci = ci + 1;
-                  return (
-                    <td key={tci} onClick={(ev) => onCellClick(ri, tci, ev)} style={{
-                      ...td(20, cellBg(ri, tci)),
-                      cursor: 'cell',
-                      boxShadow: selBoxShadow(sel, ri, tci, TOTAL, FIRST_COL, LAST_COL),
-                    }} />
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function thStyle(width: number): React.CSSProperties {
-  return {
-    width, height: 22,
-    background: '#f0f0f0',
-    border: BORDER, borderTop: 'none', borderLeft: 'none',
-    fontSize: 11, fontWeight: 600, color: '#555',
-    textAlign: 'center', padding: 0,
-    position: 'sticky', top: 0, zIndex: 10,
-    fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif",
-  };
-}
-
-const rowNumStyle: React.CSSProperties = {
-  width: 36,
-  background: '#f0f0f0',
-  border: BORDER, borderLeft: 'none',
-  fontSize: 11, color: '#555',
-  textAlign: 'center', padding: 0,
-  userSelect: 'none', cursor: 'pointer',
-  fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif",
-};
-
-function td(height: number, bg: string): React.CSSProperties {
-  return {
-    height, background: bg,
-    border: BORDER, borderLeft: 'none', borderTop: 'none',
-    fontSize: 14, padding: '3px 8px',
-    userSelect: 'none',
-    fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif",
-  };
+  return <Sheet rows={rows} colWidths={COL_WIDTHS} onSelect={onSelect} />;
 }
