@@ -120,13 +120,15 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
   const gridTemplateRows = [`${HEADER_HEIGHT}px`, ...rowHeights.map(h => `minmax(${h}px, auto)`)].join(' ');
   const totalWidth = colWidths.reduce((a, b) => a + b, 0);
 
-  // Bleed width per content column: distance from this column's left edge to E's right edge.
-  // Text inside a content cell wraps within this width — so it extends past the cell's own column
-  // but stops at the end of E.
+  // Cumulative column left edges, for computing bleed widths.
   const colLeft: number[] = [0];
   for (let i = 0; i < colWidths.length; i++) colLeft.push(colLeft[i] + colWidths[i]);
-  const rightEdge = colLeft[LAST_CONTENT_COL + 1]; // right edge of E
-  const bleedWidth = (tci: number) => rightEdge - colLeft[tci];
+  const leftEdge  = colLeft[FIRST_CONTENT_COL];      // left edge of B
+  const rightEdge = colLeft[LAST_CONTENT_COL + 1];   // right edge of E
+  // Width available for text bleeding rightward from column tci (stops at end of E).
+  const bleedWidthRight = (tci: number) => rightEdge - colLeft[tci];
+  // Width available for text bleeding leftward from the right edge of column tci (stops at start of B).
+  const bleedWidthLeft  = (tci: number) => colLeft[tci + 1] - leftEdge;
 
   // Selection helpers
   const activeCol = sel?.type === 'col' ? sel.tci : sel?.type === 'cell' ? sel.tci : -1;
@@ -248,67 +250,76 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                   }
                 }
 
-                // Right-aligned cells (location, period) don't bleed — they sit at their own right edge.
-                const shouldBleed = isContent && hasOwnText && cell?.align !== 'right';
                 const padLeft = 8 + (cell?.indent ?? 0) * 16;
-
-                // Helper to read a content cell by its column index
                 const cellAt = (col: number): Cell | null => !row ? null
                   : col === 2 ? row.b : col === 3 ? row.c : col === 4 ? row.d : col === 5 ? row.e : null;
 
-                // "Bleed run": any cell that's part of a contiguous run starting from a bleeding cell
-                // (B–E with text, non-right-aligned) and extending through empty cells to its right.
-                // For all cells in such a run we hide internal vertical dividers.
-                // Find the nearest bleeding source to my left (inclusive of me); empty cells from that
-                // source up to (but not past) the next non-empty cell are part of the run.
-                let inBleedRun = false;
-                let isBleedRunSource = false;
-                let isBleedRunEnd = false; // last cell in the run (border-right stays)
-                if (isContent && row) {
-                  // Walk left from me to find a bleeding source. Stop at any other text cell.
+                // A cell bleeds if it has text. Direction is determined by alignment:
+                // right-aligned → leftward; otherwise → rightward.
+                // Find the nearest bleeding source in the opposite direction, then verify the
+                // intervening cells are empty.
+                //   dir = +1 → text bleeds rightward (source is to my left)
+                //   dir = -1 → text bleeds leftward  (source is to my right)
+                function findRun(dir: 1 | -1): { source: number; end: number } | null {
+                  if (!isContent || !row) return null;
+                  const sourceAlign = dir === 1 ? 'left' : 'right';
+                  const isSource = (c: Cell) => !!c.value && (sourceAlign === 'right' ? c.align === 'right' : c.align !== 'right');
+                  // Walk opposite to dir from me, looking for a source.
                   let sourceCol = -1;
-                  for (let c = tci; c >= FIRST_CONTENT_COL; c--) {
+                  for (let c = tci; dir === 1 ? c >= FIRST_CONTENT_COL : c <= LAST_CONTENT_COL; c -= dir) {
                     const lc = cellAt(c)!;
-                    if (lc.value && lc.align !== 'right') {
-                      // Bleeding source found at column c. Run is valid only if every cell strictly
-                      // between c and me is empty.
-                      let runOk = true;
-                      for (let m = c + 1; m < tci; m++) {
-                        const mc = cellAt(m)!;
-                        if (mc.value) { runOk = false; break; }
+                    if (isSource(lc)) {
+                      // Validate every cell strictly between source and me is empty.
+                      // Walk from min(c,tci)+1 to max(c,tci)-1.
+                      const lo = Math.min(c, tci), hi = Math.max(c, tci);
+                      let ok = true;
+                      for (let m = lo + 1; m < hi; m++) {
+                        if (cellAt(m)!.value) { ok = false; break; }
                       }
-                      if (runOk) { sourceCol = c; }
+                      if (ok) sourceCol = c;
                       break;
                     }
-                    if (lc.value) break; // non-bleeding text cell to my left blocks the run
+                    if (lc.value) break; // any other text cell blocks the run
                   }
-                  if (sourceCol >= 0) {
-                    inBleedRun = true;
-                    isBleedRunSource = sourceCol === tci;
-                    // Run ends at last empty cell before the next non-empty cell (or LAST_CONTENT_COL).
-                    let endCol = tci;
-                    for (let c = tci + 1; c <= LAST_CONTENT_COL; c++) {
-                      const nc = cellAt(c)!;
-                      if (nc.value) break;
-                      endCol = c;
-                    }
-                    isBleedRunEnd = tci === endCol;
+                  if (sourceCol < 0) return null;
+                  // Walk in dir from me to find the run's far edge (last empty cell before next text cell)
+                  let endCol = tci;
+                  for (let c = tci + dir; dir === 1 ? c <= LAST_CONTENT_COL : c >= FIRST_CONTENT_COL; c += dir) {
+                    if (cellAt(c)!.value) break;
+                    endCol = c;
                   }
+                  return { source: sourceCol, end: endCol };
                 }
 
-                // Right border: hide between cells inside a bleed run; keep at the run's right edge.
+                const runR = findRun(1);
+                const runL = findRun(-1);
+                const inRunR = runR !== null;
+                const inRunL = runL !== null;
+                const isSourceR = inRunR && runR!.source === tci;
+                const isSourceL = inRunL && runL!.source === tci;
+                const isEndR    = inRunR && runR!.end === tci;
+                const isEndL    = inRunL && runL!.end === tci;
+
+                const shouldBleed = isContent && hasOwnText && (isSourceR || isSourceL);
+                const bleedDir: 1 | -1 = isSourceL ? -1 : 1;
+
+                // Right border: hide if I'm inside a rightward run (not the right end) or inside a
+                // leftward run (not the source — leftward source still keeps its right edge).
                 // Also hide between same-bg neighbors (section headers).
                 const nextCell = cellAt(tci + 1);
                 const nextBg = nextCell?.bg ?? '#fff';
                 const matchesNeighbor = !!cell?.bg && cell.bg !== '#fff' && cell.bg === nextBg;
-                const rightBorderColor = matchesNeighbor
-                  ? cell!.bg!
-                  : (inBleedRun && !isBleedRunEnd)
-                    ? bg
-                    : BORDER_COLOR;
+                const hideRight =
+                  (inRunR && !isEndR) ||
+                  (inRunL && !isSourceL);
+                const rightBorderColor = matchesNeighbor ? cell!.bg! : hideRight ? bg : BORDER_COLOR;
 
-                // Left border: hide for non-source cells in the run (their left divider would slash the text).
-                const leftBorderColor = (inBleedRun && !isBleedRunSource) ? bg : undefined;
+                // Left border: hide if I'm inside a rightward run (not the source) or inside a
+                // leftward run (not the left end).
+                const hideLeft =
+                  (inRunR && !isSourceR) ||
+                  (inRunL && !isEndL);
+                const leftBorderColor = hideLeft ? bg : undefined;
 
                 const cellStyle: CSSProperties = {
                   gridColumn: tci + 1, gridRow,
@@ -327,15 +338,15 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
 
                 if (shouldBleed) {
                   // Bleeding cells: flex container so inner text div is vertically centered.
-                  // Cell grows vertically to fit the wrapped text inside the inner div.
+                  // For rightward bleed, anchor at left padding. For leftward bleed, anchor at right.
                   cellStyle.display = 'flex';
                   cellStyle.alignItems = 'center';
+                  cellStyle.justifyContent = bleedDir === -1 ? 'flex-end' : 'flex-start';
                   cellStyle.padding = '3px 0';
-                  cellStyle.paddingLeft = padLeft;
-                }
-
-                // Right-aligned, non-bleeding, and empty cells use flex centering on the cell itself
-                if (!shouldBleed) {
+                  if (bleedDir === 1) cellStyle.paddingLeft = padLeft;
+                  else                 cellStyle.paddingRight = 8;
+                } else {
+                  // Non-bleeding cells: flex centering on the cell itself
                   cellStyle.display = 'flex';
                   cellStyle.alignItems = 'center';
                   cellStyle.justifyContent = cell?.align === 'right' ? 'flex-end' : cell?.align === 'center' ? 'center' : 'flex-start';
@@ -351,14 +362,18 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                   if (cell?.link)   cellStyle.textDecoration = 'underline';
                 }
 
-                // Inner text div for bleeding cells: constrained to the bleed width so it wraps at E.
-                // Stays in normal flow so the cell (and therefore the grid row) grows to fit wrapped text.
+                // Inner text div for bleeding cells: sized to the run's bleed width so text wraps
+                // at the run's far edge. Stays in normal flow so the row grows for wrapped text.
+                const innerWidth = bleedDir === 1
+                  ? bleedWidthRight(tci) - padLeft
+                  : bleedWidthLeft(tci) - 8;
                 const textStyle: CSSProperties | undefined = shouldBleed && cell ? {
-                  width: bleedWidth(tci) - padLeft,
-                  flexShrink: 0,         // don't let flex shrink it back to cell width
+                  width: innerWidth,
+                  flexShrink: 0,
                   whiteSpace: 'normal',
                   wordBreak: 'break-word',
                   lineHeight: 1.35,
+                  textAlign: bleedDir === -1 ? 'right' : 'left',
                   fontWeight: cell.bold ? 700 : undefined,
                   fontStyle: cell.italic ? 'italic' : undefined,
                   color: cell.color,
