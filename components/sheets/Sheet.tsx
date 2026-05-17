@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState, useRef, useLayoutEffect, type CSSProperties } from 'react';
 import type { CellSelection } from '../ExcelShell';
 
 // ---------- shared types ----------
@@ -66,6 +66,47 @@ export type SheetProps = {
 
 export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
   const [sel, setSel] = useState<Sel>(null);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+
+  // Overlay rect measured from the actual DOM (handles rows that grew taller from wrapped text)
+  const [overlayRect, setOverlayRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!sel || !gridRef.current) { setOverlayRect(null); return; }
+    const grid = gridRef.current;
+    const gridBox = grid.getBoundingClientRect();
+
+    function rectFor(ri: number, tci: number) {
+      const el = grid.querySelector<HTMLElement>(`[data-ri="${ri}"][data-tci="${tci}"]`);
+      if (!el) return null;
+      const b = el.getBoundingClientRect();
+      return { left: b.left - gridBox.left, top: b.top - gridBox.top, width: b.width, height: b.height };
+    }
+
+    if (sel.type === 'cell') {
+      setOverlayRect(rectFor(sel.ri, sel.tci));
+    } else if (sel.type === 'col') {
+      // Full column: top of first body cell in this column to bottom of last body cell
+      const first = rectFor(0, sel.tci);
+      const last  = rectFor(totalRows - 1, sel.tci);
+      if (first && last) {
+        setOverlayRect({
+          left: first.left, top: first.top,
+          width: first.width, height: (last.top + last.height) - first.top,
+        });
+      }
+    } else if (sel.type === 'row') {
+      // Full content row: left of B to right of E in this row
+      const b = rectFor(sel.ri, FIRST_CONTENT_COL);
+      const e = rectFor(sel.ri, LAST_CONTENT_COL);
+      if (b && e) {
+        setOverlayRect({
+          left: b.left, top: b.top,
+          width: (e.left + e.width) - b.left, height: b.height,
+        });
+      }
+    }
+  }, [sel]);
 
   // Derived geometry
   const totalRows = rows.length + EMPTY_TAIL_ROWS;
@@ -119,7 +160,7 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
 
   return (
     <div className="h-full overflow-auto" style={{ background: '#fff', fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif" }}>
-      <div style={{
+      <div ref={gridRef} style={{
         display: 'grid',
         gridTemplateColumns,
         gridTemplateRows,
@@ -211,11 +252,38 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                 const shouldBleed = isContent && hasOwnText && cell?.align !== 'right';
                 const padLeft = 8 + (cell?.indent ?? 0) * 16;
 
+                // Right border: if my bg matches the next cell's bg (non-white), use my bg so the divider vanishes.
+                const nextCell: Cell | null = row
+                  ? (tci === 2 ? row.c
+                    : tci === 3 ? row.d
+                    : tci === 4 ? row.e
+                    : null)
+                  : null;
+                const nextBg = nextCell?.bg ?? '#fff';
+                const matchesNeighbor = !!cell?.bg && cell.bg !== '#fff' && cell.bg === nextBg;
+                const rightBorderColor = matchesNeighbor ? cell!.bg! : BORDER_COLOR;
+
+                // Check whether bleeding text from a left neighbor is passing through me
+                let bleedReachesMe = false;
+                if (isContent && !hasOwnText && row) {
+                  for (let leftCol = FIRST_CONTENT_COL; leftCol < tci; leftCol++) {
+                    const leftCell = leftCol === 2 ? row.b : leftCol === 3 ? row.c : leftCol === 4 ? row.d : row.e;
+                    if (leftCell.value && leftCell.align !== 'right') {
+                      bleedReachesMe = true;
+                      break;
+                    }
+                  }
+                }
+                // Left border: if bleeding text from a left neighbor reaches me, hide the vertical divider
+                // by matching it to the cell's current background (white by default, light green when highlighted).
+                const leftBorderColor = bleedReachesMe ? bg : undefined;
+
                 const cellStyle: CSSProperties = {
                   gridColumn: tci + 1, gridRow,
                   background: bg,
-                  borderRight: `1px solid ${BORDER_COLOR}`,
+                  borderRight: `1px solid ${rightBorderColor}`,
                   borderBottom: `1px solid ${BORDER_COLOR}`,
+                  ...(leftBorderColor ? { borderLeft: `1px solid ${leftBorderColor}` } : {}),
                   fontSize: 14,
                   cursor: cell?.link ? 'pointer' : 'cell',
                   userSelect: 'none',
@@ -269,6 +337,8 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                 return (
                   <div
                     key={`c-${ri}-${tci}`}
+                    data-ri={ri}
+                    data-tci={tci}
                     onClick={(ev) => onCell(ri, tci, ev)}
                     style={cellStyle}
                   >
@@ -282,58 +352,21 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
           );
         })}
 
-        {/* === Selection overlays === */}
-        {sel && <SelectionOverlay sel={sel} colWidths={colWidths} rowHeights={rowHeights} />}
+        {/* === Selection overlay === */}
+        {overlayRect && (
+          <div style={{
+            position: 'absolute',
+            left: overlayRect.left,
+            top: overlayRect.top,
+            width: overlayRect.width,
+            height: overlayRect.height,
+            border: `2px solid ${SEL}`,
+            pointerEvents: 'none',
+            zIndex: 3,
+          }} />
+        )}
       </div>
     </div>
-  );
-}
-
-// ---------- selection overlay ----------
-
-function SelectionOverlay({
-  sel, colWidths, rowHeights,
-}: { sel: Exclude<Sel, null>; colWidths: number[]; rowHeights: number[] }) {
-  // Compute pixel positions
-  const colLeft: number[] = [0];
-  for (let i = 0; i < colWidths.length; i++) colLeft.push(colLeft[i] + colWidths[i]);
-  const rowTop: number[] = [HEADER_HEIGHT];
-  for (let i = 0; i < rowHeights.length; i++) rowTop.push(rowTop[i] + rowHeights[i]);
-
-  const totalHeight = rowTop[rowTop.length - 1];
-
-  let left = 0, top = 0, width = 0, height = 0;
-
-  if (sel.type === 'col') {
-    left = colLeft[sel.tci];
-    top = HEADER_HEIGHT;
-    width = colWidths[sel.tci];
-    height = totalHeight - HEADER_HEIGHT;
-  } else if (sel.type === 'row') {
-    left = colLeft[FIRST_CONTENT_COL];
-    top = rowTop[sel.ri];
-    width = colLeft[LAST_CONTENT_COL + 1] - colLeft[FIRST_CONTENT_COL];
-    height = rowHeights[sel.ri];
-  } else {
-    // cell
-    left = colLeft[sel.tci];
-    top = rowTop[sel.ri];
-    width = colWidths[sel.tci];
-    height = rowHeights[sel.ri];
-  }
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left, top, width, height,
-        border: `2px solid ${SEL}`,
-        pointerEvents: 'none',
-        // Overlay sits above cell backgrounds but below B's overflowing text (z=2) on bullet rows.
-        // For col/row selection that's fine — the outline is what matters, not the fill.
-        zIndex: 3,
-      }}
-    />
   );
 }
 
