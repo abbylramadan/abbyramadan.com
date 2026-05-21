@@ -161,8 +161,8 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
   // ---------- render ----------
 
   return (
-    <div className="h-full overflow-auto" style={{ background: '#fff', fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif" }}>
-      <div ref={gridRef} style={{
+    <div className="h-full overflow-auto xl-sheet-scroll" style={{ background: '#fff', fontFamily: "'Calibri','Carlito','Segoe UI',Arial,sans-serif" }}>
+      <div ref={gridRef} className="xl-sheet-grid" style={{
         display: 'grid',
         gridTemplateColumns,
         gridTemplateRows,
@@ -170,7 +170,7 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
         position: 'relative',
       }}>
         {/* === Column headers === */}
-        <div style={{
+        <div className="xl-col-header xl-col-header-corner" style={{
           ...headerCellStyle,
           gridColumn: 1, gridRow: 1,
           background: sel ? SEL_BG : '#f0f0f0',
@@ -183,6 +183,7 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
             <div
               key={`th-${tci}`}
               onClick={() => onColHeader(tci)}
+              className="xl-col-header"
               style={{
                 ...headerCellStyle,
                 gridColumn: tci + 1, gridRow: 1,
@@ -211,6 +212,7 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
               {/* Row number */}
               <div
                 onClick={() => onRowNum(ri)}
+                className="xl-row-num"
                 style={{
                   ...rowNumStyle,
                   gridColumn: 1, gridRow,
@@ -390,7 +392,7 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                     style={cellStyle}
                   >
                     {shouldBleed
-                      ? <div style={textStyle}>{cell?.value}</div>
+                      ? <div className="xl-bleed-text" style={textStyle}>{cell?.value}</div>
                       : cell?.value}
                   </div>
                 );

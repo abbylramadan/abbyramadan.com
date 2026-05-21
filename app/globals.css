@@ -182,3 +182,83 @@ body {
 .xl-sheet-tab:not(.active):hover {
   background: #e0e0e0;
 }
+
+/* =========================================================================
+   Mobile (≤ 768px) — trim chrome that wastes space on small screens.
+   Desktop layout is unaffected.
+   ========================================================================= */
+@media (max-width: 768px) {
+  /* Title bar: hide help icon and window controls (─ □ ✕) */
+  .xl-title-help,
+  .xl-title-window-controls {
+    display: none !important;
+  }
+
+  /* Ribbon body (the big icon grid). The tab strip stays. */
+  .xl-ribbon-content {
+    display: none !important;
+  }
+
+  /* Status bar right side (Average/Count/Sum/100%) — eats horizontal space */
+  .xl-status-right {
+    display: none !important;
+  }
+
+  /* Sheet: hide column headers (A B C ...) and row numbers (1 2 3 ...) */
+  .xl-col-header,
+  .xl-row-num {
+    display: none !important;
+  }
+
+  /* Hide the A filler column and F/G/H trailing columns in the body */
+  .xl-sheet-grid > [data-tci="1"],
+  .xl-sheet-grid > [data-tci="6"],
+  .xl-sheet-grid > [data-tci="7"],
+  .xl-sheet-grid > [data-tci="8"] {
+    display: none !important;
+  }
+
+  /* Mobile layout: B takes the full viewport width. C/D/E collapse in the grid track.
+     E (location, period) overlays B's right side via position: absolute so it doesn't
+     squeeze B's text. */
+  .xl-sheet-grid {
+    min-width: 0 !important;
+    width: 100% !important;
+    grid-template-columns: 0 0 1fr 0 0 0 0 0 0 !important;
+    position: relative !important;
+  }
+
+  /* E (location, period) — overlay on B's right edge instead of taking grid space.
+     Spans the same grid row as B but is absolutely positioned within that row. */
+  .xl-sheet-grid > [data-tci="5"] {
+    grid-column: 3 !important;  /* same column as B */
+    justify-self: end !important;
+    align-self: center !important;
+    font-size: 11px !important;
+    padding: 0 6px 0 4px !important;
+    white-space: nowrap !important;
+    max-width: 40vw !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    /* Float above B's bleeding text */
+    position: relative !important;
+    z-index: 5 !important;
+    /* Background to mask B's text behind it */
+    background: #fff !important;
+    /* Don't intercept clicks meant for B */
+    pointer-events: none !important;
+  }
+
+  /* When E sits on a colored row (header rows like ABBY RAMADAN), keep its bg matching */
+  .xl-sheet-grid > [data-tci="5"][style*="rgb(33, 115, 70)"],
+  .xl-sheet-grid > [data-tci="5"][style*="#217346"] {
+    background: #217346 !important;
+  }
+
+  /* Bleeding text on desktop has a fixed width (B–E pixels). On mobile, force to cell width
+     (which is now full viewport width). */
+  .xl-bleed-text {
+    width: 100% !important;
+  }
+}
+

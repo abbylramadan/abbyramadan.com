@@ -402,10 +402,10 @@ export default function ExcelShell() {
           <span className="text-lg leading-none">🟢</span>
           <span className="font-semibold">abbyramadan.com — Excel</span>
         </div>
-        <div className="flex items-center gap-1 text-white/80 text-[11px]">
+        <div className="xl-title-help flex items-center gap-1 text-white/80 text-[11px]">
           <span className="px-2 py-0.5 hover:bg-white/20 rounded cursor-pointer">?</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="xl-title-window-controls flex items-center gap-1">
           <button className="w-6 h-6 flex items-center justify-center hover:bg-white/20 rounded text-sm">─</button>
           <button className="w-6 h-6 flex items-center justify-center hover:bg-white/20 rounded text-sm">□</button>
           <button className="w-6 h-6 flex items-center justify-center hover:bg-red-600 rounded text-sm">✕</button>
@@ -439,7 +439,7 @@ export default function ExcelShell() {
       </div>
 
       {/* Ribbon content */}
-      <div style={{ display: 'flex', alignItems: 'stretch', background: '#fff', borderBottom: '2px solid #217346', padding: '0 8px', flexShrink: 0, minHeight: 72, overflowX: 'auto' }}>
+      <div className="xl-ribbon-content" style={{ display: 'flex', alignItems: 'stretch', background: '#fff', borderBottom: '2px solid #217346', padding: '0 8px', flexShrink: 0, minHeight: 72, overflowX: 'auto' }}>
         {groups.map((group, gi) => (
           <div key={gi} style={{ display: 'flex', alignItems: 'stretch' }}>
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '4px 4px 0' }}>
@@ -519,7 +519,7 @@ export default function ExcelShell() {
             <span style={{ color: 'rgba(255,255,255,0.7)' }}>|</span>
             <span>🔒 Sheet protected</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="xl-status-right" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <span>Average: –</span>
             <span>Count: –</span>
             <span>Sum: –</span>
