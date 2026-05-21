@@ -228,9 +228,10 @@ body {
     position: relative !important;
   }
 
-  /* Lock horizontal scrolling on the sheet's scroll container */
+  /* Lock horizontal scrolling on the sheet's scroll container, add small breathing room */
   .xl-sheet-scroll {
     overflow-x: hidden !important;
+    padding: 0 8px !important;
   }
 
   /* Paired rows (company/role/school/degree): B gets bottom padding to make room for E.

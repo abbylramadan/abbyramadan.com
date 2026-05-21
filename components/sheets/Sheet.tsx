@@ -119,9 +119,18 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
     rowHeights.push(i < rows.length ? (rows[i].height ?? EMPTY_ROW_HEIGHT) : EMPTY_ROW_HEIGHT);
   }
   const gridTemplateColumns = colWidths.map(w => `${w}px`).join(' ');
-  // Use minmax(h, auto) so rows grow when wrapped text needs more height,
-  // without affecting column widths (max-content would expand the columns too).
-  const gridTemplateRows = [`${HEADER_HEIGHT}px`, ...rowHeights.map(h => `minmax(${h}px, auto)`)].join(' ');
+  // Per-row track sizing:
+  //   - mobileOnly / desktopOnly rows: minmax(0, auto) → collapse to 0 when their cells are
+  //     display:none in the current viewport, expand to fit content when visible.
+  //   - other rows: minmax(Hpx, auto) → keep the explicit min height as a floor.
+  const gridTemplateRows = [
+    `${HEADER_HEIGHT}px`,
+    ...rowHeights.map((h, i) => {
+      const r = i < rows.length ? rows[i] : null;
+      const collapsible = r && (r.mobileOnly || r.desktopOnly);
+      return collapsible ? `minmax(0, auto)` : `minmax(${h}px, auto)`;
+    }),
+  ].join(' ');
   const totalWidth = colWidths.reduce((a, b) => a + b, 0);
 
   // Cumulative column left edges, for computing bleed widths.

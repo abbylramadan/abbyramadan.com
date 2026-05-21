@@ -394,7 +394,7 @@ export default function ExcelShell() {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#f3f3f3]" style={{ fontFamily: "'Calibri', 'Carlito', 'Segoe UI', Arial, sans-serif" }}>
+    <div className="flex flex-col w-screen overflow-hidden bg-[#f3f3f3]" style={{ fontFamily: "'Calibri', 'Carlito', 'Segoe UI', Arial, sans-serif", height: '100dvh' }}>
 
       {/* Title bar */}
       <div className="flex items-center justify-between bg-[#217346] text-white px-3 h-8 text-xs select-none shrink-0">

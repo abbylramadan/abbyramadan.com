@@ -20,17 +20,52 @@ function spacer(height = 6): Row {
   return { ref: '', formula: '', height, b: ec(), c: ec(), d: ec(), e: ec() };
 }
 
-const rows: Row[] = [
+// Build a skill row: desktop = skill | category | proficiency, mobile = "Skill — proficiency"
+function skillRow(ref: string, formula: string, name: string, category: string, prof: Cell): Row[] {
+  return [
+    { ref, formula,
+      b: lbl(name), c: plain(category), d: prof, e: ec(),
+      desktopOnly: true },
+    { ref, formula, height: 22,
+      b: { value: `${name} — ${prof.value}`, color: prof.color ?? '#222', bold: !!prof.bold },
+      c: ec(), d: ec(), e: ec(),
+      mobileOnly: true },
+  ];
+}
+
+const rows: Row[] = ([
   sectionRow('B1', '="Projects"', hdr('PROJECTS')),
   spacer(6),
 
+  // Desktop: table header (Project / Description / Technologies / Status) — hidden on mobile
   { ref: 'B3', formula: '=XLOOKUP("project_header",Projects!A:A,Projects!B:B)',
-    b: sect('Project'), c: sect('Description'), d: sect('Technologies'), e: sect('Status') },
+    b: sect('Project'), c: sect('Description'), d: sect('Technologies'), e: sect('Status'),
+    desktopOnly: true },
+
+  // Desktop: single project row with all columns
   { ref: 'B4', formula: '=XLOOKUP("home_calc",Projects!A:A,Projects!B:B)', height: 42,
     b: lnk('Home Affordability Calculator', 'https://mortgagecalc.abbyramadan.com'),
     c: plain('Comprehensive tool for understanding home affordability. Features mortgage calculations, interactive visualizations, and personalized analysis based on income, debts, and financial goals.'),
     d: tag('React · TypeScript · Chart.js · Tailwind CSS'),
-    e: { value: '✅ Live', color: G, bold: true } },
+    e: { value: '✅ Live', color: G, bold: true },
+    desktopOnly: true },
+
+  // Mobile: same project as a card — link, status, description, tech stack stacked
+  { ref: 'B4', formula: '=XLOOKUP("home_calc",Projects!A:A,Projects!B:B)', height: 22,
+    b: lnk('Home Affordability Calculator', 'https://mortgagecalc.abbyramadan.com'),
+    c: ec(), d: ec(), e: ec(),
+    mobileOnly: true },
+  { ref: '', formula: '', height: 18,
+    b: { value: '✅ Live', color: G, bold: true }, c: ec(), d: ec(), e: ec(),
+    mobileOnly: true },
+  { ref: '', formula: '', height: 60,
+    b: plain('Comprehensive tool for understanding home affordability. Features mortgage calculations, interactive visualizations, and personalized analysis based on income, debts, and financial goals.'),
+    c: ec(), d: ec(), e: ec(),
+    mobileOnly: true },
+  { ref: '', formula: '', height: 22,
+    b: tag('React · TypeScript · Chart.js · Tailwind CSS'), c: ec(), d: ec(), e: ec(),
+    mobileOnly: true },
+
   spacer(6),
   { ref: 'B6', formula: '=XLOOKUP("more_projects",Projects!A:A,Projects!B:B)',
     b: { value: 'More projects coming soon...', italic: true, color: '#555' }, c: ec(), d: ec(), e: ec() },
@@ -39,26 +74,21 @@ const rows: Row[] = [
   sectionRow('B8', '="Skills"', hdr('SKILLS')),
   spacer(6),
 
+  // Desktop: skill table header — hidden on mobile
   { ref: 'B10', formula: '=XLOOKUP("skill_header",Skills!A:A,Skills!B:B)',
-    b: sect('Skill'), c: sect('Category'), d: sect('Proficiency'), e: ec() },
-  { ref: 'B11', formula: '=XLOOKUP("excel",Skills!A:A,Skills!B:B)',
-    b: lbl('Excel'), c: plain('Finance / Reporting'), d: { value: '★★★★★  Advanced', color: G, bold: true }, e: ec() },
-  { ref: 'B12', formula: '=XLOOKUP("sql",Skills!A:A,Skills!B:B)',
-    b: lbl('SQL'), c: plain('Data / Reporting'), d: { value: '★★★★☆  Advanced', color: G, bold: true }, e: ec() },
-  { ref: 'B13', formula: '=XLOOKUP("forecasting",Skills!A:A,Skills!B:B)',
-    b: lbl('Forecasting'), c: plain('Finance'), d: { value: '★★★★☆  Advanced', color: G, bold: true }, e: ec() },
-  { ref: 'B14', formula: '=XLOOKUP("python",Skills!A:A,Skills!B:B)',
-    b: lbl('Python'), c: plain('Analytics'), d: { value: '★★★☆☆  Intermediate', color: '#555' }, e: ec() },
-  { ref: 'B15', formula: '=XLOOKUP("r",Skills!A:A,Skills!B:B)',
-    b: lbl('R'), c: plain('Analytics'), d: { value: '★★★☆☆  Intermediate', color: '#555' }, e: ec() },
-  { ref: 'B16', formula: '=XLOOKUP("tableau",Skills!A:A,Skills!B:B)',
-    b: lbl('Tableau'), c: plain('Visualization'), d: { value: '★★★☆☆  Intermediate', color: '#555' }, e: ec() },
-  { ref: 'B17', formula: '=XLOOKUP("powerbi",Skills!A:A,Skills!B:B)',
-    b: lbl('PowerBI'), c: plain('Visualization'), d: { value: '★★★☆☆  Intermediate', color: '#555' }, e: ec() },
-  { ref: 'B18', formula: '=XLOOKUP("power_automate",Skills!A:A,Skills!B:B)',
-    b: lbl('Power Automate'), c: plain('Automation'), d: { value: '★★★☆☆  Intermediate', color: '#555' }, e: ec() },
+    b: sect('Skill'), c: sect('Category'), d: sect('Proficiency'), e: ec(),
+    desktopOnly: true },
+
+  skillRow('B11', '=XLOOKUP("excel",Skills!A:A,Skills!B:B)', 'Excel', 'Finance / Reporting', { value: '★★★★★  Advanced', color: G, bold: true }),
+  skillRow('B12', '=XLOOKUP("sql",Skills!A:A,Skills!B:B)', 'SQL', 'Data / Reporting', { value: '★★★★☆  Advanced', color: G, bold: true }),
+  skillRow('B13', '=XLOOKUP("forecasting",Skills!A:A,Skills!B:B)', 'Forecasting', 'Finance', { value: '★★★★☆  Advanced', color: G, bold: true }),
+  skillRow('B14', '=XLOOKUP("python",Skills!A:A,Skills!B:B)', 'Python', 'Analytics', { value: '★★★☆☆  Intermediate', color: '#555' }),
+  skillRow('B15', '=XLOOKUP("r",Skills!A:A,Skills!B:B)', 'R', 'Analytics', { value: '★★★☆☆  Intermediate', color: '#555' }),
+  skillRow('B16', '=XLOOKUP("tableau",Skills!A:A,Skills!B:B)', 'Tableau', 'Visualization', { value: '★★★☆☆  Intermediate', color: '#555' }),
+  skillRow('B17', '=XLOOKUP("powerbi",Skills!A:A,Skills!B:B)', 'PowerBI', 'Visualization', { value: '★★★☆☆  Intermediate', color: '#555' }),
+  skillRow('B18', '=XLOOKUP("power_automate",Skills!A:A,Skills!B:B)', 'Power Automate', 'Automation', { value: '★★★☆☆  Intermediate', color: '#555' }),
   spacer(20),
-];
+] as (Row | Row[])[]).flat();
 
 export default function ProjectsSheet({ onSelect }: { onSelect: (s: CellSelection) => void }) {
   return <Sheet rows={rows} colWidths={COL_WIDTHS} onSelect={onSelect} />;
