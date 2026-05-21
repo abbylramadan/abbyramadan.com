@@ -21,6 +21,10 @@ export type Row = {
   formula: string;
   height?: number;
   b: Cell; c: Cell; d: Cell; e: Cell;
+  // Viewport visibility — used for company/role rows that emit a separate mobile-only
+  // sub-row with the location/period left-aligned underneath the main label.
+  mobileOnly?: boolean;
+  desktopOnly?: boolean;
 };
 
 export type Sel =
@@ -206,13 +210,14 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
           const row: Row | undefined = rows[ri];
           const bullet = row ? isBullet(row) : false;
           const gridRow = ri + 2; // +1 for header, +1 for 1-indexed grid
+          const visibilityClass = row?.mobileOnly ? 'xl-mobile-only' : row?.desktopOnly ? 'xl-desktop-only' : '';
 
           return (
             <div key={`row-${ri}`} style={{ display: 'contents' }}>
               {/* Row number */}
               <div
                 onClick={() => onRowNum(ri)}
-                className="xl-row-num"
+                className={`xl-row-num ${visibilityClass}`}
                 style={{
                   ...rowNumStyle,
                   gridColumn: 1, gridRow,
@@ -383,12 +388,20 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                   pointerEvents: 'none',
                 } : undefined;
 
+                // "Paired row" signal: B has short content AND E has content (company+location,
+                // role+period, school+location, degree+period). Used by mobile CSS to lay them out
+                // side-by-side instead of giving B the full width.
+                const isPaired = !!row && !!row.b.value && !!row.e.value && row.e.align === 'right';
+                const pairedAttr = isPaired ? { 'data-paired': '1' } : {};
+
                 return (
                   <div
                     key={`c-${ri}-${tci}`}
                     data-ri={ri}
                     data-tci={tci}
+                    {...pairedAttr}
                     onClick={(ev) => onCell(ri, tci, ev)}
+                    className={visibilityClass}
                     style={cellStyle}
                   >
                     {shouldBleed

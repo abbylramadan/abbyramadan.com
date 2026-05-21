@@ -228,37 +228,59 @@ body {
     position: relative !important;
   }
 
-  /* E (location, period) — overlay on B's right edge instead of taking grid space.
-     Spans the same grid row as B but is absolutely positioned within that row. */
-  .xl-sheet-grid > [data-tci="5"] {
-    grid-column: 3 !important;  /* same column as B */
-    justify-self: end !important;
-    align-self: center !important;
-    font-size: 11px !important;
-    padding: 0 6px 0 4px !important;
-    white-space: nowrap !important;
-    max-width: 40vw !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    /* Float above B's bleeding text */
-    position: relative !important;
-    z-index: 5 !important;
-    /* Background to mask B's text behind it */
-    background: #fff !important;
-    /* Don't intercept clicks meant for B */
-    pointer-events: none !important;
+  /* Paired rows (company/role/school/degree): B gets bottom padding to make room for E.
+     E is absolutely positioned at the bottom-left of B's cell so it sits underneath
+     B's text within the same grid cell area. */
+  .xl-sheet-grid > [data-tci="2"][data-paired="1"] {
+    padding-bottom: 22px !important;
   }
 
-  /* When E sits on a colored row (header rows like ABBY RAMADAN), keep its bg matching */
-  .xl-sheet-grid > [data-tci="5"][style*="rgb(33, 115, 70)"],
-  .xl-sheet-grid > [data-tci="5"][style*="#217346"] {
-    background: #217346 !important;
+  /* E: live in B's grid track (same grid-column 3, same grid-row from inline style).
+     Absolutely position inside that shared cell area to bottom-left.
+     Each cell has position: relative inline, so a sibling grid item at the same
+     grid coords can use position: absolute to anchor itself within the grid track. */
+  .xl-sheet-grid > [data-tci="5"][data-paired="1"] {
+    grid-column: 3 !important;
+    position: absolute !important;
+    left: 8px !important;
+    bottom: 4px !important;
+    width: auto !important;
+    max-width: calc(100% - 16px) !important;
+    font-size: 11px !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    background: transparent !important;
+    pointer-events: none !important;
+    color: #555 !important;
+    font-style: italic !important;
+    text-align: left !important;
+    z-index: 6 !important;
+    /* Use grid-row from inline to keep E vertically aligned with B's row */
+  }
+
+  /* Non-paired E (always empty on this site) — hide entirely */
+  .xl-sheet-grid > [data-tci="5"]:not([data-paired="1"]) {
+    display: none !important;
   }
 
   /* Bleeding text on desktop has a fixed width (B–E pixels). On mobile, force to cell width
      (which is now full viewport width). */
   .xl-bleed-text {
     width: 100% !important;
+  }
+
+  /* Mobile-only / desktop-only rows. On mobile (this block), hide desktop-only cells. */
+  .xl-desktop-only {
+    display: none !important;
+  }
+}
+
+/* On desktop (outside the @media), hide mobile-only cells. */
+@media (min-width: 769px) {
+  .xl-mobile-only {
+    display: none !important;
   }
 }
 

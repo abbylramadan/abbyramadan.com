@@ -20,24 +20,54 @@ function sectionRow(ref: string, formula: string, label: string, bg: string, hei
 function spacer(height = 6): Row {
   return { ref: '', formula: '', height, b: ec(), c: ec(), d: ec(), e: ec() };
 }
-function companyRow(ref: string, formula: string, name: string, location: string): Row {
-  return { ref, formula,
-    b: txt(name, '#1a1a1a', true), c: ec(), d: ec(),
-    e: txt(location, '#555', false, false, 0, 'right') };
+// Each helper returns one or more rows.
+// Desktop: company/role/plain rows have B (label) + E (location/period) side-by-side.
+// Mobile: emits an extra row underneath with the location/period in B, left-aligned.
+function companyRow(ref: string, formula: string, name: string, location: string): Row[] {
+  return [
+    { ref, formula,
+      b: txt(name, '#1a1a1a', true), c: ec(), d: ec(),
+      e: txt(location, '#555', false, false, 0, 'right'),
+      desktopOnly: true },
+    { ref, formula, height: 18,
+      b: txt(name, '#1a1a1a', true), c: ec(), d: ec(), e: ec(),
+      mobileOnly: true },
+    { ref: '', formula: '', height: 16,
+      b: txt(location, '#555', false, true), c: ec(), d: ec(), e: ec(),
+      mobileOnly: true },
+  ];
 }
-function roleRow(ref: string, formula: string, role: string, period: string): Row {
-  return { ref, formula,
-    b: txt(role, '#333', false, true), c: ec(), d: ec(),
-    e: txt(period, '#555', false, true, 0, 'right') };
+function roleRow(ref: string, formula: string, role: string, period: string): Row[] {
+  return [
+    { ref, formula,
+      b: txt(role, '#333', false, true), c: ec(), d: ec(),
+      e: txt(period, '#555', false, true, 0, 'right'),
+      desktopOnly: true },
+    { ref, formula, height: 18,
+      b: txt(role, '#333', false, true), c: ec(), d: ec(), e: ec(),
+      mobileOnly: true },
+    { ref: '', formula: '', height: 16,
+      b: txt(period, '#555', false, true), c: ec(), d: ec(), e: ec(),
+      mobileOnly: true },
+  ];
 }
 function bulletRow(ref: string, formula: string, text: string, height?: number): Row {
   return { ref, formula, height,
     b: txt('•  ' + text, '#222'), c: ec(), d: ec(), e: ec() };
 }
-function plainRow(ref: string, formula: string, text: string, period: string, height?: number): Row {
-  return { ref, formula, height,
-    b: txt(text, '#222'), c: ec(), d: ec(),
-    e: txt(period, '#555', false, true, 0, 'right') };
+function plainRow(ref: string, formula: string, text: string, period: string, height?: number): Row[] {
+  return [
+    { ref, formula, height,
+      b: txt(text, '#222'), c: ec(), d: ec(),
+      e: txt(period, '#555', false, true, 0, 'right'),
+      desktopOnly: true },
+    { ref, formula, height: 18,
+      b: txt(text, '#222'), c: ec(), d: ec(), e: ec(),
+      mobileOnly: true },
+    { ref: '', formula: '', height: 16,
+      b: txt(period, '#555', false, true), c: ec(), d: ec(), e: ec(),
+      mobileOnly: true },
+  ];
 }
 function skillsRow(ref: string, formula: string, text: string): Row {
   return { ref, formula, height: 28,
@@ -45,7 +75,7 @@ function skillsRow(ref: string, formula: string, text: string): Row {
     c: { value: '', bg: LG }, d: { value: '', bg: LG }, e: { value: '', bg: LG } };
 }
 
-const rows: Row[] = [
+const rows: Row[] = ([
   sectionRow('B1', '="Abby Ramadan"', 'ABBY RAMADAN', G),
   { ref: 'B2', formula: '=XLOOKUP("title",Info!A:A,Info!B:B)',
     b: filled('Capital Markets Associate  ·  Financial Analyst  ·  Structured Finance', G, false, true),
@@ -117,7 +147,7 @@ const rows: Row[] = [
   spacer(4),
   skillsRow('B55', '=XLOOKUP("skills_text",Resume!A:A,Resume!B:B)', 'Excel (advanced)  ·  SQL  ·  Tableau  ·  PowerBI  ·  Power Automate  ·  R  ·  Python  ·  Forecasting  ·  Treasury & Liquidity Management  ·  Structured Finance'),
   spacer(20),
-];
+] as (Row | Row[])[]).flat();
 
 export default function ResumeSheet({ onSelect }: { onSelect: (s: CellSelection) => void }) {
   return <Sheet rows={rows} colWidths={COL_WIDTHS} onSelect={onSelect} />;
