@@ -423,6 +423,8 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
             width: overlayRect.width,
             height: overlayRect.height,
             border: `2px solid ${SEL}`,
+            // Thin white inner line between the green border and the cell content
+            boxShadow: 'inset 0 0 0 1px #ffffff',
             pointerEvents: 'none',
             zIndex: 3,
           }} />

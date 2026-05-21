@@ -228,6 +228,11 @@ body {
     position: relative !important;
   }
 
+  /* Lock horizontal scrolling on the sheet's scroll container */
+  .xl-sheet-scroll {
+    overflow-x: hidden !important;
+  }
+
   /* Paired rows (company/role/school/degree): B gets bottom padding to make room for E.
      E is absolutely positioned at the bottom-left of B's cell so it sits underneath
      B's text within the same grid cell area. */
