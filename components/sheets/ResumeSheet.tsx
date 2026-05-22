@@ -1,6 +1,6 @@
 'use client';
 
-import Sheet, { type Cell, type Row, G, LG, MG, W } from './Sheet';
+import Sheet, { type Cell, type Row, LG, MG, W } from './Sheet';
 import type { CellSelection } from '../ExcelShell';
 
 // Desktop layout: content lives in D..G (Sheet.tsx FIRST/LAST_CONTENT_COL).
@@ -79,17 +79,17 @@ function skillsRow(ref: string, formula: string, text: string): Row {
 }
 
 const rows: Row[] = ([
-  sectionRow('B1', '="Abby Ramadan"', 'ABBY RAMADAN', G),
+  sectionRow('B1', '="Abby Ramadan"', 'ABBY RAMADAN', MG),
   { ref: 'B2', formula: '=XLOOKUP("title",Info!A:A,Info!B:B)',
-    b: filled('Capital Markets Associate  ·  Financial Analyst  ·  Structured Finance', G, false, true),
-    c: filled('', G), d: filled('', G), e: filled('', G) },
+    b: filled('Capital Markets Associate  ·  Financial Analyst  ·  Structured Finance', MG, false, true),
+    c: filled('', MG), d: filled('', MG), e: filled('', MG) },
   { ref: 'B3', formula: '=XLOOKUP("contact",Info!A:A,Info!B:B)',
-    b: { ...filled('Chicago, IL  (open to relocation to Bay Area)  ·  abbyramadan98@gmail.com  ·  linkedin.com/in/abby-ramadan/', G, false, true),
+    b: { ...filled('Chicago, IL  (open to relocation to Bay Area)  ·  abbyramadan98@gmail.com  ·  linkedin.com/in/abby-ramadan/', MG, false, true),
          inlineLinks: {
            'abbyramadan98@gmail.com': 'mailto:abbyramadan98@gmail.com',
            'linkedin.com/in/abby-ramadan/': 'https://linkedin.com/in/abby-ramadan/',
          } },
-    c: filled('', G), d: filled('', G), e: filled('', G) },
+    c: filled('', MG), d: filled('', MG), e: filled('', MG) },
   spacer(6),
 
   sectionRow('B5', '=XLOOKUP("summary",Resume!A:A,Resume!B:B)', 'SUMMARY', MG),
