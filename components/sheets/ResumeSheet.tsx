@@ -3,7 +3,10 @@
 import Sheet, { type Cell, type Row, G, LG, MG, W } from './Sheet';
 import type { CellSelection } from '../ExcelShell';
 
-const COL_WIDTHS = [36, 30, 200, 180, 180, 150, 60, 60, 60];
+// Desktop layout: content lives in D..G (Sheet.tsx FIRST/LAST_CONTENT_COL).
+// A, B, C are leading filler; H, I, J, K are trailing filler.
+// Order: row# | A | B | C | D | E | F | G | H | I | J | K
+const COL_WIDTHS = [36, 150, 150, 150, 220, 200, 200, 170, 150, 100, 100, 100];
 
 function ec(): Cell { return { value: '' }; }
 function filled(v: string, bg: string, bold?: boolean, italic?: boolean, color?: string): Cell {
@@ -81,7 +84,11 @@ const rows: Row[] = ([
     b: filled('Capital Markets Associate  ·  Financial Analyst  ·  Structured Finance', G, false, true),
     c: filled('', G), d: filled('', G), e: filled('', G) },
   { ref: 'B3', formula: '=XLOOKUP("contact",Info!A:A,Info!B:B)',
-    b: filled('Chicago, IL  (open to relocation to Bay Area)  ·  abbyramadan98@gmail.com  ·  linkedin.com/in/abby-ramadan/', G, false, true),
+    b: { ...filled('Chicago, IL  (open to relocation to Bay Area)  ·  abbyramadan98@gmail.com  ·  linkedin.com/in/abby-ramadan/', G, false, true),
+         inlineLinks: {
+           'abbyramadan98@gmail.com': 'mailto:abbyramadan98@gmail.com',
+           'linkedin.com/in/abby-ramadan/': 'https://linkedin.com/in/abby-ramadan/',
+         } },
     c: filled('', G), d: filled('', G), e: filled('', G) },
   spacer(6),
 

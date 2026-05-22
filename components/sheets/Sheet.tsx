@@ -14,6 +14,8 @@ export type Cell = {
   indent?: number;
   align?: 'left' | 'center' | 'right';
   link?: string;
+  // Inline links: substring → href. Each match in `value` is rendered as <a href={href}>.
+  inlineLinks?: Record<string, string>;
 };
 
 export type Row = {
@@ -43,10 +45,11 @@ export const SEL = '#217346';
 export const SEL_BG = '#e2efda';
 export const BORDER_COLOR = '#d0d7de';
 
-const COLS = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-const TOTAL_COLS = 9; // row# + A..H
-const FIRST_CONTENT_COL = 2; // B
-const LAST_CONTENT_COL  = 5; // E
+const COLS = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'];
+// Content lives in D..G (tci 4..7). A, B, C are leading fillers; H, I, J, K are trailing fillers.
+// Mobile CSS collapses everything except D.
+const FIRST_CONTENT_COL = 4; // D
+const LAST_CONTENT_COL  = 7; // G
 const HEADER_HEIGHT = 22;
 const ROW_NUM_WIDTH = 36;
 const EMPTY_TAIL_ROWS = 20;
@@ -55,6 +58,43 @@ const EMPTY_ROW_HEIGHT = 20;
 // Bullet rows: B's content visually overflows into C/D
 function isBullet(r: Row) {
   return r.b.value.startsWith('•') && !r.c.value && !r.d.value && !r.e.value;
+}
+
+// Render a cell's value, replacing any `inlineLinks` substrings with <a> tags.
+// If no inlineLinks, returns the raw string. Anchors stop propagation so they don't
+// also trigger the cell's onClick handler.
+function renderCellValue(cell: Cell | null) {
+  if (!cell) return null;
+  const links = cell.inlineLinks;
+  const value = cell.value;
+  if (!links || Object.keys(links).length === 0) return value;
+  // Build a regex that matches any link substring, in order they appear in the value.
+  // Escape regex metacharacters in the keys.
+  const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(Object.keys(links).map(escapeRe).join('|'), 'g');
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(value)) !== null) {
+    if (match.index > lastIndex) parts.push(value.slice(lastIndex, match.index));
+    const text = match[0];
+    const href = links[text];
+    parts.push(
+      <a
+        key={`lnk-${match.index}`}
+        href={href}
+        target={href.startsWith('mailto:') ? undefined : '_blank'}
+        rel="noopener noreferrer"
+        onClick={(ev) => ev.stopPropagation()}
+        style={{ color: 'inherit', textDecoration: 'underline' }}
+      >
+        {text}
+      </a>
+    );
+    lastIndex = match.index + text.length;
+  }
+  if (lastIndex < value.length) parts.push(value.slice(lastIndex));
+  return <>{parts}</>;
 }
 
 // ---------- props ----------
@@ -118,7 +158,15 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
   for (let i = 0; i < totalRows; i++) {
     rowHeights.push(i < rows.length ? (rows[i].height ?? EMPTY_ROW_HEIGHT) : EMPTY_ROW_HEIGHT);
   }
-  const gridTemplateColumns = colWidths.map(w => `${w}px`).join(' ');
+  // Build grid-template-columns:
+  //   - row# (col 0): fixed pixel width
+  //   - content columns (FIRST_CONTENT_COL..LAST_CONTENT_COL): fixed pixel widths
+  //   - filler columns: 1fr so they flex equally
+  const gridTemplateColumns = colWidths.map((w, i) => {
+    if (i === 0) return `${w}px`; // row#
+    if (i >= FIRST_CONTENT_COL && i <= LAST_CONTENT_COL) return `${w}px`;
+    return '1fr';
+  }).join(' ');
   // Per-row track sizing:
   //   - mobileOnly / desktopOnly rows: minmax(0, auto) → collapse to 0 when their cells are
   //     display:none in the current viewport, expand to fit content when visible.
@@ -161,13 +209,13 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
     const row = rows[ri];
     let formula = '';
     if (row) {
-      const cell = tci === 2 ? row.b : tci === 3 ? row.c : tci === 4 ? row.d : tci === 5 ? row.e : null;
+      const cell = tci === 4 ? row.b : tci === 5 ? row.c : tci === 6 ? row.d : tci === 7 ? row.e : null;
       if (tci === 2 && row.b.value)      formula = row.formula;
       else if (cell && cell.value)        formula = cell.value;
     }
     onSelect({ ref: `${COLS[tci] ?? 'B'}${ri + 1}`, formula });
     // Follow links on cell content
-    const cell = row && (tci === 2 ? row.b : tci === 3 ? row.c : tci === 4 ? row.d : tci === 5 ? row.e : null);
+    const cell = row && (tci === 4 ? row.b : tci === 5 ? row.c : tci === 6 ? row.d : tci === 7 ? row.e : null);
     if (cell?.link) window.open(cell.link, '_blank');
   }
 
@@ -179,6 +227,7 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
         display: 'grid',
         gridTemplateColumns,
         gridTemplateRows,
+        width: '100%',
         minWidth: totalWidth,
         position: 'relative',
       }}>
@@ -238,14 +287,14 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                 {ri + 1}
               </div>
 
-              {/* A filler + B, C, D, E + F, G, H fillers */}
-              {Array.from({ length: 8 }).map((_, ci) => {
+              {/* Filler columns + content cells (driven by colWidths length) */}
+              {Array.from({ length: colWidths.length - 1 }).map((_, ci) => {
                 const tci = ci + 1; // 1..8 — A..H
                 const cell: Cell | null = row
-                  ? (tci === 2 ? row.b
-                    : tci === 3 ? row.c
-                    : tci === 4 ? row.d
-                    : tci === 5 ? row.e
+                  ? (tci === 4 ? row.b
+                    : tci === 5 ? row.c
+                    : tci === 6 ? row.d
+                    : tci === 7 ? row.e
                     : null)
                   : null;
 
@@ -268,7 +317,7 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
 
                 const padLeft = 8 + (cell?.indent ?? 0) * 16;
                 const cellAt = (col: number): Cell | null => !row ? null
-                  : col === 2 ? row.b : col === 3 ? row.c : col === 4 ? row.d : col === 5 ? row.e : null;
+                  : col === 4 ? row.b : col === 5 ? row.c : col === 6 ? row.d : col === 7 ? row.e : null;
 
                 // A cell bleeds if it has text. Direction is determined by alignment:
                 // right-aligned → leftward; otherwise → rightward.
@@ -343,7 +392,7 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                   borderRight: `1px solid ${rightBorderColor}`,
                   borderBottom: `1px solid ${BORDER_COLOR}`,
                   ...(leftBorderColor ? { borderLeft: `1px solid ${leftBorderColor}` } : {}),
-                  fontSize: 14,
+                  fontSize: 18,
                   cursor: cell?.link ? 'pointer' : 'cell',
                   userSelect: 'none',
                   overflow: isContent ? 'visible' : 'hidden',
@@ -414,8 +463,8 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                     style={cellStyle}
                   >
                     {shouldBleed
-                      ? <div className="xl-bleed-text" style={textStyle}>{cell?.value}</div>
-                      : cell?.value}
+                      ? <div className="xl-bleed-text" style={textStyle}>{renderCellValue(cell)}</div>
+                      : renderCellValue(cell)}
                   </div>
                 );
               })}

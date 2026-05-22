@@ -210,21 +210,25 @@ body {
     display: none !important;
   }
 
-  /* Hide the A filler column and F/G/H trailing columns in the body */
+  /* Hide all filler columns (A, B, C and H, I, J, K). Content lives in D-G (tci 4-7);
+     on mobile only logical B (=tci 4) is shown. Logical C/D/E (tci 5/6/7) are collapsed
+     but kept in DOM so the paired-row trick still applies for tci 7. */
   .xl-sheet-grid > [data-tci="1"],
-  .xl-sheet-grid > [data-tci="6"],
-  .xl-sheet-grid > [data-tci="7"],
-  .xl-sheet-grid > [data-tci="8"] {
+  .xl-sheet-grid > [data-tci="2"],
+  .xl-sheet-grid > [data-tci="3"],
+  .xl-sheet-grid > [data-tci="8"],
+  .xl-sheet-grid > [data-tci="9"],
+  .xl-sheet-grid > [data-tci="10"],
+  .xl-sheet-grid > [data-tci="11"] {
     display: none !important;
   }
 
-  /* Mobile layout: B takes the full viewport width. C/D/E collapse in the grid track.
-     E (location, period) overlays B's right side via position: absolute so it doesn't
-     squeeze B's text. */
+  /* Mobile layout: logical B (tci 4) fills the viewport. Everything else collapses to 0.
+     Grid order: row#, A, B, C, D, E, F, G, H, I, J, K = 12 tracks. */
   .xl-sheet-grid {
     min-width: 0 !important;
     width: 100% !important;
-    grid-template-columns: 0 0 1fr 0 0 0 0 0 0 !important;
+    grid-template-columns: 0 0 0 0 1fr 0 0 0 0 0 0 0 !important;
     position: relative !important;
   }
 
@@ -234,19 +238,20 @@ body {
     padding: 0 8px !important;
   }
 
-  /* Paired rows (company/role/school/degree): B gets bottom padding to make room for E.
-     E is absolutely positioned at the bottom-left of B's cell so it sits underneath
-     B's text within the same grid cell area. */
-  .xl-sheet-grid > [data-tci="2"][data-paired="1"] {
+  /* Keep cell text at a comfortable mobile size (desktop is 16) */
+  .xl-sheet-grid > [data-tci] {
+    font-size: 14px !important;
+  }
+
+  /* Paired rows (company/role/school/degree): logical B (tci 4) gets bottom padding,
+     logical E (tci 7) is absolutely positioned at the bottom-left of B's cell. */
+  .xl-sheet-grid > [data-tci="4"][data-paired="1"] {
     padding-bottom: 22px !important;
   }
 
-  /* E: live in B's grid track (same grid-column 3, same grid-row from inline style).
-     Absolutely position inside that shared cell area to bottom-left.
-     Each cell has position: relative inline, so a sibling grid item at the same
-     grid coords can use position: absolute to anchor itself within the grid track. */
-  .xl-sheet-grid > [data-tci="5"][data-paired="1"] {
-    grid-column: 3 !important;
+  /* Logical E (tci 7) on paired rows: position into B's track (grid-column 5) at bottom-left */
+  .xl-sheet-grid > [data-tci="7"][data-paired="1"] {
+    grid-column: 5 !important;
     position: absolute !important;
     left: 8px !important;
     bottom: 4px !important;
@@ -263,11 +268,17 @@ body {
     font-style: italic !important;
     text-align: left !important;
     z-index: 6 !important;
-    /* Use grid-row from inline to keep E vertically aligned with B's row */
   }
 
   /* Non-paired E (always empty on this site) — hide entirely */
-  .xl-sheet-grid > [data-tci="5"]:not([data-paired="1"]) {
+  .xl-sheet-grid > [data-tci="7"]:not([data-paired="1"]) {
+    display: none !important;
+  }
+
+  /* Logical C and D (tci 5, 6) — hide on mobile since their content already moved into B
+     via the mobile-only rows in ProjectsSheet. */
+  .xl-sheet-grid > [data-tci="5"],
+  .xl-sheet-grid > [data-tci="6"] {
     display: none !important;
   }
 

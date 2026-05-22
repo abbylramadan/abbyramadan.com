@@ -3,7 +3,10 @@
 import Sheet, { type Cell, type Row, G, LG, MG, W } from './Sheet';
 import type { CellSelection } from '../ExcelShell';
 
-const COL_WIDTHS = [36, 30, 180, 220, 180, 130, 60, 60, 60];
+// Desktop layout: content lives in D..G (Sheet.tsx FIRST/LAST_CONTENT_COL).
+// A, B, C are leading filler; H, I, J, K are trailing filler.
+// Order: row# | A | B | C | D | E | F | G | H | I | J | K
+const COL_WIDTHS = [36, 150, 150, 150, 200, 260, 200, 150, 150, 100, 100, 100];
 
 function ec(): Cell { return { value: '' }; }
 function hdr(v: string): Cell { return { value: v, bold: true, bg: G, color: W }; }
