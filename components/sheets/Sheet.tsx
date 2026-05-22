@@ -432,6 +432,10 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                 const innerWidth = bleedDir === 1
                   ? bleedWidthRight(tci) - padLeft
                   : bleedWidthLeft(tci) - 8;
+                // pointer-events: none on the bleed text by default so it doesn't catch clicks
+                // meant for cells in neighboring columns. But if the cell has inline links,
+                // let them be clickable.
+                const hasInlineLinks = !!cell?.inlineLinks && Object.keys(cell.inlineLinks).length > 0;
                 const textStyle: CSSProperties | undefined = shouldBleed && cell ? {
                   width: innerWidth,
                   flexShrink: 0,
@@ -443,7 +447,7 @@ export default function Sheet({ rows, colWidths, onSelect }: SheetProps) {
                   fontStyle: cell.italic ? 'italic' : undefined,
                   color: cell.color,
                   textDecoration: cell.link ? 'underline' : undefined,
-                  pointerEvents: 'none',
+                  pointerEvents: hasInlineLinks ? 'auto' : 'none',
                 } : undefined;
 
                 // "Paired row" signal: B has short content AND E has content (company+location,
